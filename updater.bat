@@ -1,6 +1,24 @@
 @echo off
 setlocal
 
+echo [*] Checking for git...
+where git >nul 2>&1
+if errorlevel 1 (
+    echo [!] Git is not installed or not in PATH. Please install Git from https://git-scm.com/
+    pause
+    exit /b 1
+)
+
+echo [*] Pulling latest changes from repository...
+git -C "%~dp0" pull https://github.com/gooneralert/Ardvark-external
+if errorlevel 1 (
+    echo [!] Git pull failed. Ensure you have network access and the repository is configured correctly.
+    pause
+    exit /b 1
+)
+echo [+] Repository up to date.
+
+echo.
 set "OFFSETS_DIR=%~dp0src\Ardvark\offsets"
 set "OFFSETS_URL=https://imtheo.lol/Offsets/Offsets.cs"
 set "FFLAGS_URL=https://imtheo.lol/Offsets/FFlags.cs"
