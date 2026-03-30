@@ -1,4 +1,5 @@
 using FoulzExternal.config;
+using FoulzExternal.helpers;
 using FoulzExternal.features.games.universal.aiming.silent;
 using FoulzExternal.features.games.universal.camera;
 using FoulzExternal.features.games.universal.desync;
@@ -49,6 +50,7 @@ namespace FoulzExternal
             _ping = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(500) };
             _ping.Tick += (s, e) => { };
             Loaded += loaddat;
+            Loaded += async (s, e) => { await Task.Delay(2000); await UpdateChecker.CheckAsync(); };
             this.PreviewKeyDown += mainwindow_keydown;
             this.PreviewMouseDown += mainwindow_previousmousedown;
         }
