@@ -27,7 +27,7 @@ namespace FoulzExternal.SDK.gamedetector
                 long id = dm.GetGameID();
                 if (id == 0) return GameType.checking;
 
-                if (id == 113491250) return GameType.pf;
+                if (id == 113491250 || id == 292439477) return GameType.pf;
                 if (id == 6035872082) return GameType.rivals;
 
                 return GameType.universal;

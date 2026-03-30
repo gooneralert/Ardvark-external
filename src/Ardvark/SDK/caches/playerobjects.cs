@@ -407,6 +407,15 @@ namespace FoulzExternal.SDK.caches
                     {
                         Options.Settings.Checks.PFTeamCheck = true;
                         _lastAutoGame = GameType.pf;
+                        System.Windows.Application.Current?.Dispatcher.BeginInvoke(() =>
+                        {
+                            var win = System.Windows.Application.Current?.MainWindow as FoulzExternal.MainWindow;
+                            if (win?.PFTeamCheckToggle != null)
+                            {
+                                win.PFTeamCheckToggle.IsChecked = true;
+                                win.PFTeamCheckToggle.Content = "ON";
+                            }
+                        });
                     }
                     else if (currentGame != GameType.pf && currentGame != GameType.checking)
                     {
