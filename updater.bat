@@ -65,8 +65,7 @@ echo [+] Shortcut created: Ardvark.lnk
 
 echo.
 echo [*] Saving version info...
-for /f %%i in ('git -C "%~dp0." rev-parse HEAD') do set "LATEST_SHA=%%i"
-echo %LATEST_SHA%> "%~dp0app\version.txt"
+copy /Y "%~dp0version.txt" "%~dp0app\version.txt" >nul
 echo [+] version.txt updated.
 
 echo.

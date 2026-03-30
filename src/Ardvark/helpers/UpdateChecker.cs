@@ -1,41 +1,38 @@
 using FoulzExternal.logging.notifications;
 using System;
 using System.Net.Http;
-using System.Text.Json;
 using System.Threading.Tasks;
 
 namespace FoulzExternal.helpers
 {
     public static class UpdateChecker
     {
-        private const string ApiUrl = "https://api.github.com/repos/gooneralert/Ardvark-external/commits/main";
+        private const string RemoteVersionUrl = "https://raw.githubusercontent.com/gooneralert/Ardvark-external/main/version.txt";
 
-        // Store the latest known commit SHA at build time via a file, or compare against a stored local SHA.
-        // We use the GitHub API to get the latest commit SHA and compare against the one saved locally.
-        private static readonly string LocalShaPath = System.IO.Path.Combine(
+        private static readonly string LocalVersionPath = System.IO.Path.Combine(
             AppDomain.CurrentDomain.BaseDirectory, "version.txt");
 
         public static async Task CheckAsync()
         {
             try
             {
-                string? latestSha = await GetLatestShaAsync();
-                if (latestSha == null) return;
+                string? remoteVersion = await GetRemoteVersionAsync();
+                if (remoteVersion == null) return;
 
-                string? localSha = GetLocalSha();
+                string? localVersion = GetLocalVersion();
 
-                if (localSha == null)
+                if (localVersion == null)
                 {
-                    // First run — save the current SHA so we have a baseline
-                    SaveLocalSha(latestSha);
+                    // First run — save so we have a baseline
+                    SaveLocalVersion(remoteVersion);
                     return;
                 }
 
-                if (!string.Equals(latestSha, localSha, StringComparison.OrdinalIgnoreCase))
+                if (!string.Equals(remoteVersion, localVersion, StringComparison.OrdinalIgnoreCase))
                 {
                     notify.Notify(
-                        "Update available",
-                        "A new version of Ardvark is available. Run updater.bat to update.",
+                        $"Update available (v{remoteVersion})",
+                        $"You are on v{localVersion}. Run updater.bat to update.",
                         6000);
                 }
             }
@@ -45,32 +42,27 @@ namespace FoulzExternal.helpers
             }
         }
 
-        private static async Task<string?> GetLatestShaAsync()
+        private static async Task<string?> GetRemoteVersionAsync()
         {
             using var client = new HttpClient();
             client.DefaultRequestHeaders.UserAgent.ParseAdd("Ardvark-UpdateChecker/1.0");
             client.Timeout = TimeSpan.FromSeconds(10);
 
-            var response = await client.GetAsync(ApiUrl);
+            var response = await client.GetAsync(RemoteVersionUrl);
             if (!response.IsSuccessStatusCode) return null;
 
-            var json = await response.Content.ReadAsStringAsync();
-            using var doc = JsonDocument.Parse(json);
-            if (doc.RootElement.TryGetProperty("sha", out var sha))
-                return sha.GetString();
-
-            return null;
+            return (await response.Content.ReadAsStringAsync()).Trim();
         }
 
-        private static string? GetLocalSha()
+        private static string? GetLocalVersion()
         {
-            if (!System.IO.File.Exists(LocalShaPath)) return null;
-            return System.IO.File.ReadAllText(LocalShaPath).Trim();
+            if (!System.IO.File.Exists(LocalVersionPath)) return null;
+            return System.IO.File.ReadAllText(LocalVersionPath).Trim();
         }
 
-        public static void SaveLocalSha(string sha)
+        public static void SaveLocalVersion(string version)
         {
-            System.IO.File.WriteAllText(LocalShaPath, sha);
+            System.IO.File.WriteAllText(LocalVersionPath, version);
         }
     }
 }
