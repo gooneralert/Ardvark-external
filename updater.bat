@@ -10,7 +10,7 @@ if errorlevel 1 (
 )
 
 echo [*] Pulling latest changes from repository...
-git -C "%~dp0" pull https://github.com/gooneralert/Ardvark-external
+git -C "%~dp0." pull https://github.com/gooneralert/Ardvark-external
 if errorlevel 1 (
     echo [!] Git pull failed. Ensure you have network access and the repository is configured correctly.
     pause
