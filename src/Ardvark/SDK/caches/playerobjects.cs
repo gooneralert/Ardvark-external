@@ -406,7 +406,7 @@ namespace FoulzExternal.SDK.caches
                     if (currentGame == GameType.pf && _lastAutoGame != GameType.pf)
                     {
                         Options.Settings.Checks.PFTeamCheck = true;
-                        Options.Settings.Aiming.AimingType = 0; // Mouse
+                        Options.Settings.Aiming.AimingType = 1; // Mouse
                         Options.Settings.Aiming.Sensitivity = 4f;
                         Options.Settings.Aiming.Range = 1000f;
                         Options.Settings.Visuals.Skeleton = true;
@@ -417,7 +417,7 @@ namespace FoulzExternal.SDK.caches
                             var win = System.Windows.Application.Current?.MainWindow as FoulzExternal.MainWindow;
                             if (win == null) return;
                             if (win.PFTeamCheckToggle != null) { win.PFTeamCheckToggle.IsChecked = true; win.PFTeamCheckToggle.Content = "ON"; }
-                            if (win.AimingTypeCombo != null) win.AimingTypeCombo.SelectedIndex = 0;
+                            if (win.AimingTypeCombo != null) win.AimingTypeCombo.SelectedIndex = 1;
                             if (win.SensitivitySlider != null) win.SensitivitySlider.Value = 4;
                             if (win.SensitivityValueText != null) win.SensitivityValueText.Text = "4.00";
                             if (win.RangeSlider != null) win.RangeSlider.Value = 1000;
@@ -434,7 +434,7 @@ namespace FoulzExternal.SDK.caches
                     // Auto-configure settings once each time game3 is entered
                     if (currentGame == GameType.game3 && _lastAutoGame != GameType.game3)
                     {
-                        Options.Settings.Aiming.AimingType = 0; // Mouse
+                        Options.Settings.Aiming.AimingType = 1; // Mouse
                         Options.Settings.Aiming.Sensitivity = 4f;
                         Options.Settings.Aiming.Range = 1000f;
                         Options.Settings.Visuals.Skeleton = true;
@@ -444,7 +444,7 @@ namespace FoulzExternal.SDK.caches
                         {
                             var win = System.Windows.Application.Current?.MainWindow as FoulzExternal.MainWindow;
                             if (win == null) return;
-                            if (win.AimingTypeCombo != null) win.AimingTypeCombo.SelectedIndex = 0;
+                            if (win.AimingTypeCombo != null) win.AimingTypeCombo.SelectedIndex = 1;
                             if (win.SensitivitySlider != null) win.SensitivitySlider.Value = 4;
                             if (win.SensitivityValueText != null) win.SensitivityValueText.Text = "4.00";
                             if (win.RangeSlider != null) win.RangeSlider.Value = 1000;
