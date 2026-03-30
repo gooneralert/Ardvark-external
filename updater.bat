@@ -43,6 +43,8 @@ set "FFLAGS_URL=https://imtheo.lol/Offsets/FFlags.cs"
 set "OFFSETS_FILE=%OFFSETS_DIR%\offsets.cs"
 set "FFLAGS_FILE=%OFFSETS_DIR%\FFlags.cs"
 
+if not exist "%OFFSETS_DIR%" mkdir "%OFFSETS_DIR%"
+
 echo [*] Updating offsets...
 
 curl.exe -s -L -o "%OFFSETS_FILE%" "%OFFSETS_URL%"
