@@ -12,6 +12,7 @@ namespace FoulzExternal.SDK.gamedetector
         unknownshi,
         pf,
         rivals,
+        game3,
         universal
     }
 
@@ -29,6 +30,7 @@ namespace FoulzExternal.SDK.gamedetector
 
                 if (id == 113491250 || id == 292439477) return GameType.pf;
                 if (id == 6035872082) return GameType.rivals;
+                if (id == 17625359962) return GameType.game3;
 
                 return GameType.universal;
             }

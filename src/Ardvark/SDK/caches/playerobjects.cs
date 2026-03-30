@@ -402,24 +402,56 @@ namespace FoulzExternal.SDK.caches
                     list_cuh.Clear();
                     var currentGame = finder.whatgame();
 
-                    // Auto-enable PFTeamCheck once each time PF is entered
+                    // Auto-configure settings once each time PF is entered
                     if (currentGame == GameType.pf && _lastAutoGame != GameType.pf)
                     {
                         Options.Settings.Checks.PFTeamCheck = true;
+                        Options.Settings.Aiming.AimingType = 0; // Mouse
+                        Options.Settings.Aiming.Sensitivity = 4f;
+                        Options.Settings.Aiming.Range = 1000f;
+                        Options.Settings.Visuals.Skeleton = true;
+                        Options.Settings.Visuals.ChinaHat = true;
                         _lastAutoGame = GameType.pf;
                         System.Windows.Application.Current?.Dispatcher.BeginInvoke(() =>
                         {
                             var win = System.Windows.Application.Current?.MainWindow as FoulzExternal.MainWindow;
-                            if (win?.PFTeamCheckToggle != null)
-                            {
-                                win.PFTeamCheckToggle.IsChecked = true;
-                                win.PFTeamCheckToggle.Content = "ON";
-                            }
+                            if (win == null) return;
+                            if (win.PFTeamCheckToggle != null) { win.PFTeamCheckToggle.IsChecked = true; win.PFTeamCheckToggle.Content = "ON"; }
+                            if (win.AimingTypeCombo != null) win.AimingTypeCombo.SelectedIndex = 0;
+                            if (win.SensitivitySlider != null) win.SensitivitySlider.Value = 4;
+                            if (win.SensitivityValueText != null) win.SensitivityValueText.Text = "4.00";
+                            if (win.RangeSlider != null) win.RangeSlider.Value = 1000;
+                            if (win.RangeValueText != null) win.RangeValueText.Text = "1000";
+                            if (win.SkeletonToggle != null) { win.SkeletonToggle.IsChecked = true; win.SkeletonToggle.Content = "ON"; }
+                            if (win.ChinaHatToggle != null) { win.ChinaHatToggle.IsChecked = true; win.ChinaHatToggle.Content = "ON"; }
                         });
                     }
                     else if (currentGame != GameType.pf && currentGame != GameType.checking)
                     {
                         _lastAutoGame = currentGame;
+                    }
+
+                    // Auto-configure settings once each time game3 is entered
+                    if (currentGame == GameType.game3 && _lastAutoGame != GameType.game3)
+                    {
+                        Options.Settings.Aiming.AimingType = 0; // Mouse
+                        Options.Settings.Aiming.Sensitivity = 4f;
+                        Options.Settings.Aiming.Range = 1000f;
+                        Options.Settings.Visuals.Skeleton = true;
+                        Options.Settings.Visuals.ChinaHat = true;
+                        _lastAutoGame = GameType.game3;
+                        System.Windows.Application.Current?.Dispatcher.BeginInvoke(() =>
+                        {
+                            var win = System.Windows.Application.Current?.MainWindow as FoulzExternal.MainWindow;
+                            if (win == null) return;
+                            if (win.AimingTypeCombo != null) win.AimingTypeCombo.SelectedIndex = 0;
+                            if (win.SensitivitySlider != null) win.SensitivitySlider.Value = 4;
+                            if (win.SensitivityValueText != null) win.SensitivityValueText.Text = "4.00";
+                            if (win.RangeSlider != null) win.RangeSlider.Value = 1000;
+                            if (win.RangeValueText != null) win.RangeValueText.Text = "1000";
+                            if (win.SkeletonToggle != null) { win.SkeletonToggle.IsChecked = true; win.SkeletonToggle.Content = "ON"; }
+                            if (win.ChinaHatToggle != null) { win.ChinaHatToggle.IsChecked = true; win.ChinaHatToggle.Content = "ON"; }
+                        });
                     }
 
                     if (currentGame == GameType.pf)
