@@ -1,0 +1,22 @@
+# Build output
+app/
+publish_tmp/
+src/Ardvark/bin/
+src/Ardvark/obj/
+
+# Compiled exe next to updater
+*.exe
+*.lnk
+
+# VS / Rider
+.vs/
+.idea/
+*.user
+*.suo
+
+# NuGet
+packages/
+*.nupkg
+
+# Logs
+*.log
