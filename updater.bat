@@ -1,22 +1,40 @@
 @echo off
 setlocal
 
-echo [*] Checking for git...
-where git >nul 2>&1
+set "REPO_ZIP_URL=https://github.com/gooneralert/Ardvark-external/archive/refs/heads/main.zip"
+set "TEMP_ZIP=%TEMP%\ardvark_update.zip"
+set "TEMP_EXTRACT=%TEMP%\ardvark_update_extract"
+set "SELF=%~dp0."
+
+echo [*] Downloading latest update...
+powershell -Command "Invoke-WebRequest -Uri '%REPO_ZIP_URL%' -OutFile '%TEMP_ZIP%'" 2>nul
 if errorlevel 1 (
-    echo [!] Git is not installed or not in PATH. Please install Git from https://git-scm.com/
+    echo [!] Failed to download update. Check your internet connection.
+    pause
+    exit /b 1
+)
+echo [+] Download complete.
+
+echo [*] Extracting update...
+if exist "%TEMP_EXTRACT%" rmdir /S /Q "%TEMP_EXTRACT%"
+powershell -Command "Expand-Archive -Path '%TEMP_ZIP%' -DestinationPath '%TEMP_EXTRACT%' -Force" 2>nul
+if errorlevel 1 (
+    echo [!] Failed to extract update.
     pause
     exit /b 1
 )
 
-echo [*] Pulling latest changes from repository...
-git -C "%~dp0." pull https://github.com/gooneralert/Ardvark-external
+echo [*] Applying update...
+powershell -Command "Copy-Item -Path '%TEMP_EXTRACT%\Ardvark-external-main\*' -Destination '%SELF%' -Recurse -Force"
 if errorlevel 1 (
-    echo [!] Git pull failed. Ensure you have network access and the repository is configured correctly.
+    echo [!] Failed to apply update.
     pause
     exit /b 1
 )
 echo [+] Repository up to date.
+
+rmdir /S /Q "%TEMP_EXTRACT%" 2>nul
+del /Q "%TEMP_ZIP%" 2>nul
 
 echo.
 set "OFFSETS_DIR=%~dp0src\Ardvark\offsets"
