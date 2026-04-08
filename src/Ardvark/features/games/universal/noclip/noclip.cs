@@ -11,6 +11,8 @@ namespace FoulzExternal.features.games.universal.noclip
     {
         public static bool Enabled = false;
         public static KeyBind Bind = new KeyBind("NoclipBind");
+        // true = keybind toggles noclip on/off, false = always active when Enabled
+        public static bool BindMode = true;
 
         private static bool running;
         private static Thread? thread;
@@ -56,10 +58,17 @@ namespace FoulzExternal.features.games.universal.noclip
                         continue;
                     }
 
-                    bool down = Bind.IsPressed();
-                    if (down && !bindWasDown)
-                        noclipActive = !noclipActive;
-                    bindWasDown = down;
+                    if (BindMode)
+                    {
+                        bool down = Bind.IsPressed();
+                        if (down && !bindWasDown)
+                            noclipActive = !noclipActive;
+                        bindWasDown = down;
+                    }
+                    else
+                    {
+                        noclipActive = true;
+                    }
 
                     if (!noclipActive) { Thread.Sleep(5); continue; }
 

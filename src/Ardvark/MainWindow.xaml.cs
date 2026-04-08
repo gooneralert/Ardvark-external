@@ -172,6 +172,7 @@ namespace FoulzExternal
                 if (CarFlySpeedSlider != null) CarFlySpeedSlider.Value = Options.Settings.CarFly.CarFlySpeed;
                 if (CarFlyBindButton != null) { var cb = Options.Settings.CarFly.CarFlyBind; if (cb != null) { if (cb.Key > 0) CarFlyBindButton.Content = KeyInterop.KeyFromVirtualKey(cb.Key).ToString(); else if (cb.MouseButton >= 0) CarFlyBindButton.Content = cb.MouseButton == 0 ? "M1" : cb.MouseButton == 1 ? "M2" : "M3"; else CarFlyBindButton.Content = "SET"; } }
                 if (NoclipToggle != null) { NoclipToggle.IsChecked = noclip.Enabled; NoclipToggle.Content = noclip.Enabled ? "ON" : "OFF"; }
+                if (NoclipBindModeToggle != null) { NoclipBindModeToggle.IsChecked = noclip.BindMode; NoclipBindModeToggle.Content = noclip.BindMode ? "KEYBIND" : "ALWAYS"; }
                 if (NoclipBindButton != null) { var nb = noclip.Bind; if (nb != null) { if (nb.Key > 0) NoclipBindButton.Content = KeyInterop.KeyFromVirtualKey(nb.Key).ToString(); else if (nb.MouseButton >= 0) NoclipBindButton.Content = nb.MouseButton == 0 ? "M1" : nb.MouseButton == 1 ? "M2" : "M3"; else NoclipBindButton.Content = "SET"; } }
                 if (SilentAimbotToggle != null) { SilentAimbotToggle.IsChecked = Options.Settings.Silent.SilentAimbot; SilentAimbotToggle.Content = SilentAimbotToggle.IsChecked == true ? "ON" : "OFF"; }
                 if (SilentAlwaysOnToggle != null) { SilentAlwaysOnToggle.IsChecked = Options.Settings.Silent.AlwaysOn; SilentAlwaysOnToggle.Content = SilentAlwaysOnToggle.IsChecked == true ? "ON" : "OFF"; }
@@ -696,6 +697,7 @@ namespace FoulzExternal
         private void carflyspeed(object sender, RoutedPropertyChangedEventArgs<double> e) { if (_shutup || CarFlySpeedSlider == null) return; Options.Settings.CarFly.CarFlySpeed = (float)CarFlySpeedSlider.Value; }
         private void noclipkey(object sender, RoutedEventArgs e) { if (_shutup) return; noclip.Bind.Waiting = true; var b = FindName("NoclipBindButton") as Button; if (b != null) b.Content = "PRESS..."; try { Dispatcher.BeginInvoke(new Action(() => { try { Keyboard.Focus(this); this.Focus(); } catch { } })); } catch { } }
         private void nocliptgl(object sender, RoutedEventArgs e) { if (_shutup || !(sender is ToggleButton tb)) return; tb.Content = tb.IsChecked == true ? "ON" : "OFF"; noclip.Enabled = tb.IsChecked == true; }
+        private void noclipmode(object sender, RoutedEventArgs e) { if (_shutup || !(sender is ToggleButton tb)) return; noclip.BindMode = tb.IsChecked == true; tb.Content = noclip.BindMode ? "KEYBIND" : "ALWAYS"; }
 
         private void spotifytgl(object sender, RoutedEventArgs e) { if (_shutup || !(sender is ToggleButton tb)) return; tb.Content = tb.IsChecked == true ? "ON" : "OFF"; if (tb.IsChecked == true) SpotifyOverlay.Launch(); }
 
