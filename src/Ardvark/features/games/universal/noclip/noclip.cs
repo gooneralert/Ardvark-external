@@ -1,54 +1,23 @@
-using System;
-using System.Diagnostics;
+﻿using System;
 using System.Threading;
-using System.Runtime.InteropServices;
+using FoulzExternal.helpers.keybind;
 using FoulzExternal.SDK;
 using FoulzExternal.storage;
 using Offsets;
-using Options;
 
 namespace FoulzExternal.features.games.universal.noclip
 {
     internal static class noclip
     {
+        public static bool Enabled = false;
+        public static KeyBind Bind = new KeyBind("NoclipBind");
+
         private static bool running;
         private static Thread? thread;
         private static readonly object locker = new();
 
         private static volatile bool noclipActive;
         private static bool bindWasDown;
-
-        [DllImport("user32.dll")]
-        private static extern short GetAsyncKeyState(int vKey);
-
-        [DllImport("user32.dll")]
-        private static extern IntPtr GetForegroundWindow();
-
-        [DllImport("user32.dll")]
-        private static extern uint GetWindowThreadProcessId(IntPtr hWnd, out uint processId);
-
-        private static uint cachedRobloxPid;
-        private static double pidCacheTime;
-
-        static bool IsRobloxFocused()
-        {
-            IntPtr fg = GetForegroundWindow();
-            if (fg == IntPtr.Zero) return false;
-            GetWindowThreadProcessId(fg, out uint pid);
-            if (cachedRobloxPid != 0 && pid == cachedRobloxPid) return true;
-            double now = Stopwatch.GetTimestamp() / (double)Stopwatch.Frequency;
-            if (now - pidCacheTime > 2.0)
-            {
-                pidCacheTime = now;
-                try
-                {
-                    var procs = Process.GetProcessesByName("RobloxPlayerBeta");
-                    if (procs.Length > 0) cachedRobloxPid = (uint)procs[0].Id;
-                }
-                catch { }
-            }
-            return pid == cachedRobloxPid;
-        }
 
         public static void Start()
         {
@@ -79,7 +48,7 @@ namespace FoulzExternal.features.games.universal.noclip
             {
                 try
                 {
-                    if (!Settings.Misc.NoclipEnabled)
+                    if (!Enabled)
                     {
                         noclipActive = false;
                         bindWasDown = false;
@@ -87,7 +56,7 @@ namespace FoulzExternal.features.games.universal.noclip
                         continue;
                     }
 
-                    bool down = Settings.Misc.NoclipBind.IsPressed();
+                    bool down = Bind.IsPressed();
                     if (down && !bindWasDown)
                         noclipActive = !noclipActive;
                     bindWasDown = down;
