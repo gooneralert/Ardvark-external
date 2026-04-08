@@ -5,6 +5,7 @@ using FoulzExternal.features.games.universal.camera;
 using FoulzExternal.features.games.universal.desync;
 using FoulzExternal.features.games.universal.flight;
 using FoulzExternal.features.games.universal.carfly;
+using FoulzExternal.features.games.universal.noclip;
 using FoulzExternal.features.games.universal.spotify;
 using FoulzExternal.games.universal.aiming;
 using FoulzExternal.games.universal.humanoid;
@@ -170,6 +171,8 @@ namespace FoulzExternal
                 if (CarFlyToggle != null) { CarFlyToggle.IsChecked = Options.Settings.CarFly.CarFlyEnabled; CarFlyToggle.Content = CarFlyToggle.IsChecked == true ? "ON" : "OFF"; }
                 if (CarFlySpeedSlider != null) CarFlySpeedSlider.Value = Options.Settings.CarFly.CarFlySpeed;
                 if (CarFlyBindButton != null) { var cb = Options.Settings.CarFly.CarFlyBind; if (cb != null) { if (cb.Key > 0) CarFlyBindButton.Content = KeyInterop.KeyFromVirtualKey(cb.Key).ToString(); else if (cb.MouseButton >= 0) CarFlyBindButton.Content = cb.MouseButton == 0 ? "M1" : cb.MouseButton == 1 ? "M2" : "M3"; else CarFlyBindButton.Content = "SET"; } }
+                if (NoclipToggle != null) { NoclipToggle.IsChecked = Options.Settings.Misc.NoclipEnabled; NoclipToggle.Content = NoclipToggle.IsChecked == true ? "ON" : "OFF"; }
+                if (NoclipBindButton != null) { var nb = Options.Settings.Misc.NoclipBind; if (nb != null) { if (nb.Key > 0) NoclipBindButton.Content = KeyInterop.KeyFromVirtualKey(nb.Key).ToString(); else if (nb.MouseButton >= 0) NoclipBindButton.Content = nb.MouseButton == 0 ? "M1" : nb.MouseButton == 1 ? "M2" : "M3"; else NoclipBindButton.Content = "SET"; } }
                 if (SilentAimbotToggle != null) { SilentAimbotToggle.IsChecked = Options.Settings.Silent.SilentAimbot; SilentAimbotToggle.Content = SilentAimbotToggle.IsChecked == true ? "ON" : "OFF"; }
                 if (SilentAlwaysOnToggle != null) { SilentAlwaysOnToggle.IsChecked = Options.Settings.Silent.AlwaysOn; SilentAlwaysOnToggle.Content = SilentAlwaysOnToggle.IsChecked == true ? "ON" : "OFF"; }
                 if (SilentVisualizerToggle != null) { SilentVisualizerToggle.IsChecked = Options.Settings.Silent.SilentVisualizer; SilentVisualizerToggle.Content = SilentVisualizerToggle.IsChecked == true ? "ON" : "OFF"; }
@@ -282,6 +285,26 @@ namespace FoulzExternal
                     e.Handled = true;
                     return;
                 }
+
+                var nk = Options.Settings.Misc.NoclipBind;
+                if (nk != null && nk.Waiting)
+                {
+                    if (e.Key == Key.Escape)
+                    {
+                        nk.Waiting = false;
+                        if (NoclipBindButton != null) NoclipBindButton.Content = "SET";
+                        e.Handled = true;
+                        return;
+                    }
+
+                    int vk2 = KeyInterop.VirtualKeyFromKey(e.Key);
+                    nk.Key = vk2;
+                    nk.MouseButton = -1;
+                    nk.Waiting = false;
+                    if (NoclipBindButton != null) NoclipBindButton.Content = e.Key.ToString();
+                    e.Handled = true;
+                    return;
+                }
             }
             catch { }
         }
@@ -360,6 +383,18 @@ namespace FoulzExternal
                     {
                         ck.MouseButton = mb; ck.Key = 0; ck.Waiting = false;
                         if (CarFlyBindButton != null) CarFlyBindButton.Content = MouseButtonLabel(mb);
+                        e.Handled = true; return;
+                    }
+                }
+
+                var nk2 = Options.Settings.Misc.NoclipBind;
+                if (nk2 != null && nk2.Waiting)
+                {
+                    int mb = ResolveMouseButton(e);
+                    if (mb >= 0)
+                    {
+                        nk2.MouseButton = mb; nk2.Key = 0; nk2.Waiting = false;
+                        if (NoclipBindButton != null) NoclipBindButton.Content = MouseButtonLabel(mb);
                         e.Handled = true; return;
                     }
                 }
@@ -489,7 +524,7 @@ namespace FoulzExternal
                     _lookin?.Cancel();
                     _lookin = null;
 
-                    try { player.Start(); playerobjects.Start(); HumanoidModule.Start(); TPHandler.Start(); CameraModule.Start(); visuals.Start(); aiming.Start(); desync.Start(); flight.Start(); carfly.Start(); silentaiming.Start(); } catch { }
+                    try { player.Start(); playerobjects.Start(); HumanoidModule.Start(); TPHandler.Start(); CameraModule.Start(); visuals.Start(); aiming.Start(); desync.Start(); flight.Start(); carfly.Start(); noclip.Start(); silentaiming.Start(); } catch { }
 
 
                     Dispatcher.Invoke(() =>
@@ -659,6 +694,8 @@ namespace FoulzExternal
         private void carflykey(object sender, RoutedEventArgs e) { if (_shutup) return; var kb = Options.Settings.CarFly.CarFlyBind; if (kb == null) return; kb.Waiting = true; var b = FindName("CarFlyBindButton") as Button; if (b != null) b.Content = "PRESS..."; try { Dispatcher.BeginInvoke(new Action(() => { try { Keyboard.Focus(this); this.Focus(); } catch { } })); } catch { } }
         private void carflytgl(object sender, RoutedEventArgs e) { if (_shutup || !(sender is ToggleButton tb)) return; tb.Content = tb.IsChecked == true ? "ON" : "OFF"; Options.Settings.CarFly.CarFlyEnabled = tb.IsChecked == true; }
         private void carflyspeed(object sender, RoutedPropertyChangedEventArgs<double> e) { if (_shutup || CarFlySpeedSlider == null) return; Options.Settings.CarFly.CarFlySpeed = (float)CarFlySpeedSlider.Value; }
+        private void noclipkey(object sender, RoutedEventArgs e) { if (_shutup) return; var kb = Options.Settings.Misc.NoclipBind; if (kb == null) return; kb.Waiting = true; var b = FindName("NoclipBindButton") as Button; if (b != null) b.Content = "PRESS..."; try { Dispatcher.BeginInvoke(new Action(() => { try { Keyboard.Focus(this); this.Focus(); } catch { } })); } catch { } }
+        private void nocliptgl(object sender, RoutedEventArgs e) { if (_shutup || !(sender is ToggleButton tb)) return; tb.Content = tb.IsChecked == true ? "ON" : "OFF"; Options.Settings.Misc.NoclipEnabled = tb.IsChecked == true; }
 
         private void spotifytgl(object sender, RoutedEventArgs e) { if (_shutup || !(sender is ToggleButton tb)) return; tb.Content = tb.IsChecked == true ? "ON" : "OFF"; if (tb.IsChecked == true) SpotifyOverlay.Launch(); }
 
