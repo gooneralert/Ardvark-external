@@ -140,13 +140,6 @@ namespace Options
 
         public CarFly() { }
     }
-    public class Misc
-    {
-        public KeyBind NoclipBind = new KeyBind("NoclipBind");
-        public bool NoclipEnabled = false;
-
-        public Misc() { }
-    }
     public static class Settings
     {
         public static Humanoid Humanoid = new Humanoid();
@@ -158,6 +151,5 @@ namespace Options
         public static Flight Flight = new Flight();
         public static CarFly CarFly = new CarFly();
         public static Silent Silent = new Silent();
-        public static Misc Misc = new Misc();
     }
 }

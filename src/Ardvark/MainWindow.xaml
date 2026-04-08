@@ -898,19 +898,6 @@
                             </Border>
 
                             <Border Background="#0A0A0A" BorderBrush="#111" BorderThickness="1" Padding="12" Margin="0,0,0,10" CornerRadius="4">
-                                <StackPanel>
-                                    <Grid>
-                                        <TextBlock Text="NOCLIP" Foreground="{DynamicResource AccentBrush}" Opacity="0.7" FontSize="10" FontWeight="SemiBold"/>
-                                        <ToggleButton x:Name="NoclipToggle" HorizontalAlignment="Right" Width="45" Height="22" Style="{StaticResource toggle_vibe}" Content="OFF" Click="nocliptgl"/>
-                                    </Grid>
-                                    <Grid Margin="0,10,0,0">
-                                        <TextBlock Text="TOGGLE WITH KEYBIND" Foreground="#555" FontSize="9" FontWeight="SemiBold" VerticalAlignment="Center"/>
-                                    </Grid>
-                                    <Button x:Name="NoclipBindButton" Width="90" Height="26" Style="{StaticResource small_btn}" Click="noclipkey" Margin="0,10,0,0">SET</Button>
-                                </StackPanel>
-                            </Border>
-
-                            <Border Background="#0A0A0A" BorderBrush="#111" BorderThickness="1" Padding="12" Margin="0,0,0,10" CornerRadius="4">
                                 <Grid>
                                     <TextBlock Text="SPOTIFY OVERLAY" Foreground="{DynamicResource AccentBrush}" Opacity="0.7" FontSize="10" FontWeight="SemiBold" VerticalAlignment="Center"/>
                                     <ToggleButton x:Name="SpotifyOverlayToggle" HorizontalAlignment="Right" Width="45" Height="22" Style="{StaticResource toggle_vibe}" Content="OFF" Click="spotifytgl"/>
