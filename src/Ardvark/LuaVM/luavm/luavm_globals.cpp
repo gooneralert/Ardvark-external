@@ -391,6 +391,14 @@ namespace util {
         return 0;
     }
 
+    // tick() - returns current Unix time as a high-precision double (Roblox global)
+    int L_tick(lua_State* L) {
+        auto now = std::chrono::system_clock::now();
+        double t = std::chrono::duration<double>(now.time_since_epoch()).count();
+        lua_pushnumber(L, t);
+        return 1;
+    }
+
     int L_typeof(lua_State* L) {
         if (lua_isuserdata(L, 1)) {
             if (lua_getmetatable(L, 1)) {

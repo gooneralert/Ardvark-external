@@ -121,6 +121,7 @@ namespace util {
     int L_task_delay(lua_State* L);
     int L_spawn(lua_State* L);
     int L_Global_index(lua_State* L);
+    int L_tick(lua_State* L);
 
     // ============================================================================
     // BRIDGE FUNCTIONS (luavm_bridge.cpp)

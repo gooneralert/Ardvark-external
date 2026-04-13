@@ -183,6 +183,7 @@ namespace util {
             { "ipairs",        L_ipairs },
             { "typeof",        L_typeof },
             { "run_secure",    L_run_secure },
+            { "tick",          L_tick },
         };
         register_global_functions(L, kGlobalFuncs, sizeof(kGlobalFuncs) / sizeof(kGlobalFuncs[0]));
 

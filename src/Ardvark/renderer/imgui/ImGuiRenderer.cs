@@ -14,6 +14,8 @@ using FoulzExternal.features.games.universal.desync;
 using FoulzExternal.features.games.universal.aiming.silent;
 using FoulzExternal.features.games.universal.scriptrunner;
 using System.Windows;
+using SixLabors.ImageSharp.PixelFormats;
+using ISImage = SixLabors.ImageSharp.Image;
 
 // just imgui code that i had to made for visuals and shit
 
@@ -277,6 +279,26 @@ namespace IMGUI
                                 sd.AddTriangle(a, b, c, col, obj.Thickness);
                             break;
                         }
+                        case "Image":
+                        {
+                            var imageBytes = obj.ImageBytes;
+                            var imageKey = obj.ImageDataKey;
+                            if (imageBytes == null || imageBytes.Length == 0 || imageKey == null) break;
+                            try
+                            {
+                                using var ms = new System.IO.MemoryStream(imageBytes);
+                                using var image = ISImage.Load<Rgba32>(ms);
+                                this.AddOrGetImagePointer(imageKey, image, false, out var handle);
+                                if (handle != IntPtr.Zero)
+                                {
+                                    var min = new Vector2(obj.PositionVec.X, obj.PositionVec.Y);
+                                    var max = new Vector2(min.X + obj.SizeVec.X, min.Y + obj.SizeVec.Y);
+                                    sd.AddImage(handle, min, max);
+                                }
+                            }
+                            catch { }
+                            break;
+                        }
                     }
                 }
             }
@@ -384,6 +406,11 @@ namespace IMGUI
                     max = Vector2.Max(a, Vector2.Max(b, c));
                     return true;
                 }
+
+                case "Image":
+                    min = new Vector2(obj.PositionVec.X, obj.PositionVec.Y);
+                    max = min + new Vector2(obj.SizeVec.X, obj.SizeVec.Y);
+                    return true;
             }
 
             return false;

@@ -475,6 +475,11 @@ namespace FoulzExternal.features.games.universal.scriptrunner
                     return null;
                 }
             });
+
+            // ── Roblox globals missing from standard Lua ──────────────────────
+            // tick() returns Unix epoch time as double (Roblox global)
+            lua["tick"] = new Func<double>(() =>
+                (DateTime.UtcNow - DateTime.UnixEpoch).TotalSeconds);
         }
 
         private static bool HasActiveLuaEventConnections(Lua lua)
@@ -569,7 +574,8 @@ namespace FoulzExternal.features.games.universal.scriptrunner
             {
                 if (string.IsNullOrWhiteSpace(url))
                     throw new ArgumentException("URL cannot be empty");
-                return _httpClient.GetStringAsync(url).GetAwaiter().GetResult();
+                var bytes = _httpClient.GetByteArrayAsync(url).GetAwaiter().GetResult();
+                return System.Text.Encoding.Latin1.GetString(bytes);
             }
             catch (Exception ex)
             {
@@ -2084,6 +2090,27 @@ function run_secure(text)
         return nil
     end
     return pcall(fn)
+end
+
+-- typeof: Roblox-style type introspection (not in standard Lua)
+-- Returns the __type metamethod name for userdata, otherwise type()
+function typeof(v)
+    local t = type(v)
+    if t == "userdata" or t == "table" then
+        local mt = getmetatable(v)
+        if mt then
+            local name = rawget(mt, "__type") or rawget(mt, "__name")
+            if name then return tostring(name) end
+        end
+    end
+    -- Map Lua primitive type names to Roblox equivalents
+    if t == "number" then return "number" end
+    if t == "string" then return "string" end
+    if t == "boolean" then return "boolean" end
+    if t == "nil" then return "nil" end
+    if t == "function" then return "function" end
+    if t == "thread" then return "thread" end
+    return t
 end
 """;
     }

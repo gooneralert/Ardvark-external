@@ -227,6 +227,43 @@ namespace FoulzExternal.features.games.universal.scriptrunner
         }
         internal LuaVector2 PointCVec => _pointC;
 
+        // Image
+        internal byte[]? ImageBytes { get; private set; }
+        private string? _imageDataKey;
+        internal string? ImageDataKey => _imageDataKey;
+
+        public object? Data
+        {
+            get => null;
+            set
+            {
+                try
+                {
+                    if (value is string s && s.Length > 0)
+                    {
+                        var bytes = System.Text.Encoding.Latin1.GetBytes(s);
+                        if (ImageBytes != null && _imageDataKey != null)
+                            ScriptDrawingLayer.NotifyImageKeyStale(_imageDataKey);
+                        ImageBytes = bytes;
+                        _imageDataKey = $"img_{Id}_{bytes.Length}_{System.Math.Abs(GetBytesHash(bytes))}";
+                    }
+                }
+                catch { }
+            }
+        }
+
+        private static int GetBytesHash(byte[] bytes)
+        {
+            unchecked
+            {
+                int hash = 17;
+                int step = Math.Max(1, bytes.Length / 64);
+                for (int i = 0; i < bytes.Length; i += step)
+                    hash = hash * 31 + bytes[i];
+                return hash;
+            }
+        }
+
         public LuaDrawingObject(string drawType) { DrawType = drawType; }
 
         public void Remove()
@@ -250,12 +287,15 @@ namespace FoulzExternal.features.games.universal.scriptrunner
     public static class ScriptDrawingLayer
     {
         private static readonly System.Collections.Concurrent.ConcurrentDictionary<int, LuaDrawingObject> _objs = new();
+        private static readonly System.Collections.Concurrent.ConcurrentBag<string> _staleImageKeys = new();
 
         internal static void Add(LuaDrawingObject o) => _objs[o.Id] = o;
         internal static void Remove(int id)          => _objs.TryRemove(id, out _);
         public   static void Clear()                 => _objs.Clear();
         public   static bool HasObjects              => !_objs.IsEmpty;
         public   static IEnumerable<LuaDrawingObject> Snapshot() => _objs.Values;
+        internal static void NotifyImageKeyStale(string key) => _staleImageKeys.Add(key);
+        internal static bool TryDrainStaleKey(out string key) => _staleImageKeys.TryTake(out key!);
 
         // ABGR uint for ImGui
         public static uint ToImColor(LuaColor3 c, float alpha)
@@ -702,7 +742,17 @@ namespace FoulzExternal.features.games.universal.scriptrunner
                         return;
                     }
 
-                    SDKInst.Mem.Write(Prim() + 0x11C, native);
+                    // Write rotation and position to the physics CFrame, not the
+                    // render/interpolated copy at 0x11C (which the engine overwrites
+                    // every frame and makes teleports/flying ineffective).
+                    var rot = new Matrix3x3
+                    {
+                        r00 = native.r00, r01 = native.r01, r02 = native.r02,
+                        r10 = native.r10, r11 = native.r11, r12 = native.r12,
+                        r20 = native.r20, r21 = native.r21, r22 = native.r22,
+                    };
+                    SDKInst.Mem.Write(Prim() + Offsets.Primitive.Rotation, rot);
+                    SDKInst.Mem.Write(Prim() + Offsets.Primitive.Position, new Vector3 { x = native.x, y = native.y, z = native.z });
                 }
                 catch { }
             }
@@ -1068,7 +1118,11 @@ namespace FoulzExternal.features.games.universal.scriptrunner
 
         public string HttpGet(string url)
         {
-            try { return _http.GetStringAsync(url).GetAwaiter().GetResult(); }
+            try
+            {
+                var bytes = _http.GetByteArrayAsync(url).GetAwaiter().GetResult();
+                return System.Text.Encoding.Latin1.GetString(bytes);
+            }
             catch (Exception ex) { throw new InvalidOperationException($"HttpGet failed: {ex.Message}"); }
         }
 
@@ -1456,7 +1510,8 @@ namespace FoulzExternal.features.games.universal.scriptrunner
             {
                 if (string.IsNullOrWhiteSpace(url))
                     throw new ArgumentException("URL cannot be empty");
-                return _http.GetStringAsync(url).GetAwaiter().GetResult();
+                var bytes = _http.GetByteArrayAsync(url).GetAwaiter().GetResult();
+                return System.Text.Encoding.Latin1.GetString(bytes);
             }
             catch (Exception ex)
             {
