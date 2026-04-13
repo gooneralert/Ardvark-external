@@ -28,22 +28,65 @@
                       Padding="6,3"
                       FontSize="11"
                       SelectionChanged="ScriptDropdown_SelectionChanged">
+                <ComboBox.ItemContainerStyle>
+                    <Style TargetType="ComboBoxItem">
+                        <Setter Property="Background" Value="#0A0A0A"/>
+                        <Setter Property="Foreground" Value="#CCC"/>
+                        <Setter Property="FontSize" Value="11"/>
+                        <Setter Property="Padding" Value="6,3"/>
+                        <Setter Property="Template">
+                            <Setter.Value>
+                                <ControlTemplate TargetType="ComboBoxItem">
+                                    <Border x:Name="Bd" Background="{TemplateBinding Background}" Padding="{TemplateBinding Padding}">
+                                        <ContentPresenter/>
+                                    </Border>
+                                    <ControlTemplate.Triggers>
+                                        <Trigger Property="IsMouseOver" Value="True">
+                                            <Setter TargetName="Bd" Property="Background" Value="#1A1A1A"/>
+                                            <Setter Property="Foreground" Value="White"/>
+                                        </Trigger>
+                                        <Trigger Property="IsSelected" Value="True">
+                                            <Setter TargetName="Bd" Property="Background" Value="#151515"/>
+                                            <Setter Property="Foreground" Value="White"/>
+                                        </Trigger>
+                                    </ControlTemplate.Triggers>
+                                </ControlTemplate>
+                            </Setter.Value>
+                        </Setter>
+                    </Style>
+                </ComboBox.ItemContainerStyle>
                 <ComboBox.Template>
                     <ControlTemplate TargetType="ComboBox">
                         <Grid>
-                            <Border x:Name="Bd"
-                                    Background="{TemplateBinding Background}"
-                                    BorderBrush="{TemplateBinding BorderBrush}"
-                                    BorderThickness="{TemplateBinding BorderThickness}"
-                                    CornerRadius="3">
-                                <ContentPresenter x:Name="ContentSite"
-                                                  ContentTemplate="{TemplateBinding SelectionBoxItemTemplate}"
-                                                  Content="{TemplateBinding SelectionBoxItem}"
-                                                  VerticalAlignment="Center"
-                                                  HorizontalAlignment="Left"
-                                                  Margin="6,0,4,0"/>
-                            </Border>
-                            <Popup x:Name="Popup"
+                            <!-- Invisible toggle button fills entire area to handle clicks -->
+                            <ToggleButton Focusable="False"
+                                          IsChecked="{Binding IsDropDownOpen, Mode=TwoWay, RelativeSource={RelativeSource TemplatedParent}}"
+                                          ClickMode="Press"
+                                          Background="Transparent" BorderThickness="0">
+                                <ToggleButton.Template>
+                                    <ControlTemplate TargetType="ToggleButton">
+                                        <Border x:Name="Bd" Background="#0A0A0A" BorderBrush="#222" BorderThickness="1" CornerRadius="3">
+                                            <TextBlock x:Name="Arrow" Text="▾" Foreground="#555"
+                                                       HorizontalAlignment="Right" VerticalAlignment="Center"
+                                                       Margin="0,0,6,0" FontSize="10" IsHitTestVisible="False"/>
+                                        </Border>
+                                        <ControlTemplate.Triggers>
+                                            <Trigger Property="IsMouseOver" Value="True">
+                                                <Setter TargetName="Bd" Property="Background" Value="#111"/>
+                                                <Setter TargetName="Arrow" Property="Foreground" Value="#888"/>
+                                            </Trigger>
+                                        </ControlTemplate.Triggers>
+                                    </ControlTemplate>
+                                </ToggleButton.Template>
+                            </ToggleButton>
+                            <!-- Selected item label overlaid, not hit-testable so clicks reach ToggleButton -->
+                            <ContentPresenter x:Name="ContentSite"
+                                              IsHitTestVisible="False"
+                                              Content="{TemplateBinding SelectionBoxItem}"
+                                              ContentTemplate="{TemplateBinding SelectionBoxItemTemplate}"
+                                              VerticalAlignment="Center"
+                                              Margin="6,0,20,0"/>
+                            <Popup x:Name="PART_Popup"
                                    Placement="Bottom"
                                    IsOpen="{TemplateBinding IsDropDownOpen}"
                                    AllowsTransparency="True"
@@ -51,8 +94,8 @@
                                    PopupAnimation="Fade"
                                    MinWidth="{Binding ActualWidth, RelativeSource={RelativeSource TemplatedParent}}"
                                    StaysOpen="False">
-                                <Border Background="#0A0A0A" BorderBrush="#222" BorderThickness="1" CornerRadius="3" Padding="4">
-                                    <ScrollViewer CanContentScroll="True" HorizontalScrollBarVisibility="Disabled">
+                                <Border Background="#0A0A0A" BorderBrush="#222" BorderThickness="1" CornerRadius="3" Padding="2">
+                                    <ScrollViewer CanContentScroll="True" HorizontalScrollBarVisibility="Disabled" MaxHeight="200">
                                         <StackPanel IsItemsHost="True"/>
                                     </ScrollViewer>
                                 </Border>

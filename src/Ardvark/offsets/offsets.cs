@@ -3,10 +3,10 @@
 /*               https://imtheo.lol/Offsets                     
 /* -------------------------------------------------------------
 /*  Dumped By       : theo (https://imtheo.lol)                 
-/*  Roblox Version  : version-689e359b09ad43b0
+/*  Roblox Version  : version-26c90be22e0d4758
 /*  Dumper Version  : 2.1.6
-/*  Dumped At       : 00:18 02/04/2026 (GMT)
-/*  Total Offsets   : 390
+/*  Dumped At       : 21:56 09/04/2026 (GMT)
+/*  Total Offsets   : 391
 /* -------------------------------------------------------------
 /*  Join the discord!                                           
 /*  https://discord.gg/rbxoffsets                               
@@ -15,7 +15,7 @@
 
 namespace Offsets {
     public static class Info {
-        public static string ClientVersion = "version-689e359b09ad43b0";
+        public static string ClientVersion = "version-26c90be22e0d4758";
     }
 
     public static class AirProperties {
@@ -51,7 +51,7 @@ namespace Offsets {
 
     public static class BasePart {
          public const long CastShadow = 0xf5;
-         public const long Color3 = 0x4a;
+         public const long Color3 = 0x49;
          public const long Locked = 0xf6;
          public const long Massless = 0xf7;
          public const long Primitive = 0x148;
@@ -172,7 +172,7 @@ namespace Offsets {
     }
 
     public static class FakeDataModel {
-         public const long Pointer = 0x834a988;
+         public const long Pointer = 0x7a1d388;
          public const long RealDataModel = 0x1c0;
     }
 
@@ -214,9 +214,9 @@ namespace Offsets {
          public const long HealthDisplayType = 0x19c;
          public const long HipHeight = 0x1a0;
          public const long HumanoidRootPart = 0x478;
-         public const long HumanoidState = 0x890;
+         public const long HumanoidState = 0x898;
          public const long HumanoidStateID = 0x20;
-         public const long IsWalking = 0x90f;
+         public const long IsWalking = 0x917;
          public const long Jump = 0x1dd;
          public const long JumpHeight = 0x1ac;
          public const long JumpPower = 0x1b0;
@@ -345,14 +345,14 @@ namespace Offsets {
          public const long ByteCode = 0x150;
          public const long GUID = 0xe8;
          public const long Hash = 0x160;
-         public const long IsCoreScript = 0x180;
+         public const long IsCoreScript = 0x0;
     }
 
     public static class MouseService {
          public const long InputObject = 0x100;
          public const long InputObject2 = 0x110;
          public const long MousePosition = 0xec;
-         public const long SensitivityPointer = 0x83e9530;
+         public const long SensitivityPointer = 0x7abc440;
     }
 
     public static class ParticleEmitter {
@@ -383,7 +383,7 @@ namespace Offsets {
          public const long MaxZoomDistance = 0x320;
          public const long MinZoomDistance = 0x324;
          public const long ModelInstance = 0x398;
-         public const long Mouse = 0xf90;
+         public const long Mouse = 0xfc8;
          public const long NameDisplayDistance = 0x358;
          public const long Team = 0x2a0;
          public const long TeamColor = 0x364;
@@ -391,7 +391,7 @@ namespace Offsets {
     }
 
     public static class PlayerConfigurer {
-         public const long Pointer = 0x83206a0;
+         public const long Pointer = 0x79f30d0;
     }
 
     public static class PlayerMouse {
@@ -438,13 +438,13 @@ namespace Offsets {
     public static class RenderView {
          public const long DeviceD3D11 = 0x8;
          public const long LightingValid = 0x148;
-         public const long SkyValid = 0x0;
+         public const long SkyValid = 0x28d;
          public const long VisualEngine = 0x10;
     }
 
     public static class RunService {
-         public const long HeartbeatFPS = 0xb8;
-         public const long HeartbeatTask = 0xf0;
+         public const long HeartbeatFPS = 0xfc;
+         public const long HeartbeatTask = 0x160;
     }
 
     public static class Script {
@@ -454,7 +454,7 @@ namespace Offsets {
     }
 
     public static class ScriptContext {
-         public const long RequireBypass = 0x861;
+         public const long RequireBypass = 0x0;
     }
 
     public static class Seat {
@@ -479,6 +479,7 @@ namespace Offsets {
     public static class Sound {
          public const long Looped = 0x152;
          public const long PlaybackSpeed = 0x130;
+         public const long Playing = 0x0;
          public const long RollOffMaxDistance = 0x134;
          public const long RollOffMinDistance = 0x138;
          public const long SoundGroup = 0x100;
@@ -526,7 +527,7 @@ namespace Offsets {
          public const long JobName = 0x18;
          public const long JobStart = 0xc8;
          public const long MaxFPS = 0xb0;
-         public const long Pointer = 0x8428188;
+         public const long Pointer = 0x7af5090;
     }
 
     public static class Team {
@@ -577,7 +578,7 @@ namespace Offsets {
     public static class VisualEngine {
          public const long Dimensions = 0xa60;
          public const long FakeDataModel = 0xa40;
-         public const long Pointer = 0x7ef81d8;
+         public const long Pointer = 0x75cc058;
          public const long RenderView = 0xb40;
          public const long ViewMatrix = 0x130;
     }
