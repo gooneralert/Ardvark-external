@@ -157,6 +157,24 @@ namespace FoulzExternal.features.games.universal.scriptrunner
             Stop();
             Output.Clear();
             Directory.CreateDirectory(ScriptsDir);
+
+            // If the entire input is a bare URL, fetch it and run the contents.
+            var trimmed = script.Trim();
+            if ((trimmed.StartsWith("https://", StringComparison.OrdinalIgnoreCase) ||
+                 trimmed.StartsWith("http://",  StringComparison.OrdinalIgnoreCase)) &&
+                !trimmed.Contains('\n') && !trimmed.Contains(' '))
+            {
+                try
+                {
+                    var bytes = _httpClient.GetByteArrayAsync(trimmed).GetAwaiter().GetResult();
+                    script = System.Text.Encoding.UTF8.GetString(bytes);
+                }
+                catch (Exception ex)
+                {
+                    Output.Enqueue(($"[error] Failed to fetch script URL: {ex.Message}", "error"));
+                    return;
+                }
+            }
             RobloxInputEnabled = false;
             LuaUserInputService.Shared.Reset();
             LuaRunService.Shared.Reset();
@@ -202,7 +220,19 @@ namespace FoulzExternal.features.games.universal.scriptrunner
                 // instead of blocking the thread. This allows __pump_input and __step_threads
                 // to run between iterations of any while loops in the user script.
                 var preprocessed = PreprocessLua(script);
-                lua.DoString($"spawn(function()\n{preprocessed}\nend)", "script");
+                try
+                {
+                    lua.DoString($"spawn(function()\n{preprocessed}\nend)", "script");
+                }
+                catch (Exception)
+                {
+                    // Emit the first ~10 lines of the preprocessed script so the
+                    // user can see what the preprocessor produced near the error.
+                    var lines = preprocessed.Split('\n');
+                    var preview = string.Join("\n", System.Linq.Enumerable.Take(lines, 10));
+                    Output.Enqueue(($"[debug] preprocessed (first 10 lines):\n{preview}", "warn"));
+                    throw;
+                }
 
                 // Cooperatively pump spawned coroutines on the same Lua state.
                 // This avoids concurrent NLua access, which is unstable.
@@ -442,8 +472,37 @@ namespace FoulzExternal.features.games.universal.scriptrunner
             // ── loadstring ───────────────────────────────────────────────────
             lua["loadstring"] = new Func<string, LuaFunction?>(chunk =>
             {
-                try   { return lua.LoadString(PreprocessLua(chunk), "chunk") as LuaFunction; }
-                catch (Exception ex) { Output.Enqueue(($"[error] loadstring: {ex.Message}", "error")); return null; }
+                string? processed = null;
+                try
+                {
+                    processed = PreprocessLua(chunk);
+                    return lua.LoadString(processed, "chunk") as LuaFunction;
+                }
+                catch (Exception ex)
+                {
+                    Output.Enqueue(($"[error] loadstring: {ex.Message}", "error"));
+                    try
+                    {
+                        var errLineMatch = System.Text.RegularExpressions.Regex.Match(ex.Message, @":(\d+):");
+                        if (errLineMatch.Success && processed != null)
+                        {
+                            int errLine = int.Parse(errLineMatch.Groups[1].Value);
+                            var plines = processed.Split('\n');
+                            int start = Math.Max(0, errLine - 4);
+                            int end = Math.Min(plines.Length - 1, errLine + 1);
+                            var preview = string.Join("\n", plines[start..(end + 1)]);
+                            Output.Enqueue(($"[debug] loadstring near line {errLine} (processed):\n{preview}", "warn"));
+                            // Also show original lines for comparison
+                            var olines = chunk.Split('\n');
+                            int ostart = Math.Max(0, errLine - 4);
+                            int oend = Math.Min(olines.Length - 1, errLine + 1);
+                            var oprev = string.Join("\n", olines[ostart..(oend + 1)]);
+                            Output.Enqueue(($"[debug] loadstring near line {errLine} (original):\n{oprev}", "warn"));
+                        }
+                    }
+                    catch { }
+                    return null;
+                }
             });
 
             // ── require ──────────────────────────────────────────────────────
@@ -957,8 +1016,11 @@ namespace FoulzExternal.features.games.universal.scriptrunner
         // Converts Luau's 'continue' keyword to Lua 5.4 goto-based equivalent.
         private static string PreprocessLua(string src)
         {
+            // Convert Luau if-expressions first (var = if cond then val1 else val2)
+            src = PreprocessLuauIfExpressions(src);
             // Rewrite compound ops first (+=, -=, *=, /=, //=, %=, ^=, ..=)
             src = PreprocessCompoundOps(src);
+            src = PreprocessCStyleOps(src);
             src = PreprocessGenericFor(src);
 
             // ── Pass 1: find which loops contain 'continue' ──────────────────────
@@ -1069,11 +1131,11 @@ namespace FoulzExternal.features.games.universal.scriptrunner
                     continue;
                 }
 
-                // Long string
+                // Long string  [[...]] or [=[...]=] etc.
                 if (c == '[')
                 {
                     int eq = EqLv(src, i + 1);
-                    if (eq > 0 && i + 1 + eq < n && src[i + 1 + eq] == '[')
+                    if (i + 1 + eq < n && src[i + 1 + eq] == '[')
                     {
                         i += 2 + eq;
                         while (i < n) { if (src[i] == ']') { int e2 = EqLv(src, i + 1); if (e2 == eq && i + 2 + eq <= n && src[i + 1 + eq] == ']') { i += 2 + eq; break; } } i++; }
@@ -1101,6 +1163,35 @@ namespace FoulzExternal.features.games.universal.scriptrunner
 
                 i++;
             }
+        }
+
+        // Rewrites Luau if-expressions to standard Lua 5.4:
+        //   lhs = if cond then val1 else val2
+        //   → lhs = (function() if cond then return val1 else return val2 end end)()
+        private static string PreprocessLuauIfExpressions(string src)
+        {
+            // Rewrites Luau if-expressions used as values (not statements).
+            // These appear after =, ,, or ( on the same line:
+            //   lhs = if cond then val1 else val2
+            //   lhs1, lhs2 = expr1, if cond then val1 else val2
+            //   func(if cond then val1 else val2)
+            // → replaced with: (function() if cond then return val1 else return val2 end end)()
+            //
+            // Detection: positive lookbehind checks the char before the match is one of [,=(]
+            // Combined with \bif\b, \bthen\b, \belse\b this avoids matching statement-level
+            // if/elseif constructs and the \belse\b word boundary avoids matching "elseif".
+            var pattern = new System.Text.RegularExpressions.Regex(
+                @"(?<=[,=(])\s*\bif\b\s+(.+?)\s+\bthen\b\s+(.+?)\s+\belse\b\s+(.+?)\s*;?\s*$",
+                System.Text.RegularExpressions.RegexOptions.Compiled);
+            var lines = src.Split('\n');
+            for (int i = 0; i < lines.Length; i++)
+            {
+                var trimmed = lines[i].TrimStart();
+                if (trimmed.StartsWith("--")) continue;
+                lines[i] = pattern.Replace(lines[i], m =>
+                    $"(function() if {m.Groups[1].Value} then return {m.Groups[2].Value} else return {m.Groups[3].Value} end end)()");
+            }
+            return string.Join("\n", lines);
         }
 
         // Rewrites Luau compound assignment ops outside strings/comments:
@@ -1150,12 +1241,12 @@ namespace FoulzExternal.features.games.universal.scriptrunner
                     continue;
                 }
 
-                // ── Skip long string ─────────────────────────────────────────
+                // ── Skip long string  [[...]] or [=[...]=] etc. ─────────────
                 if (src[i] == '[')
                 {
                     int eq = 0; int k = i + 1;
                     while (k < n && src[k] == '=') { eq++; k++; }
-                    if (eq > 0 && k < n && src[k] == '[')
+                    if (k < n && src[k] == '[')
                     {
                         sb.Append(src, i, k - i + 1); i = k + 1;
                         while (i < n)
@@ -1296,6 +1387,116 @@ namespace FoulzExternal.features.games.universal.scriptrunner
             return sb.ToString();
         }
 
+        // Rewrites C-style operators that are invalid in standard Lua:
+        //   !=   →  ~=
+        //   &&   →  and
+        //   ||   →  or
+        //   !x   →  not x   (only when ! is not part of !=)
+        private static string PreprocessCStyleOps(string src)
+        {
+            var sb = new System.Text.StringBuilder(src.Length);
+            int i = 0, n = src.Length;
+
+            while (i < n)
+            {
+                // ── Skip line comment ────────────────────────────────────────
+                if (i + 1 < n && src[i] == '-' && src[i + 1] == '-')
+                {
+                    int j = i + 2;
+                    if (j < n && src[j] == '[')
+                    {
+                        int eq = 0; int k = j + 1;
+                        while (k < n && src[k] == '=') { eq++; k++; }
+                        if (k < n && src[k] == '[')
+                        {
+                            sb.Append(src, i, k - i + 1); i = k + 1;
+                            while (i < n)
+                            {
+                                if (src[i] == ']')
+                                {
+                                    int e2 = 0; int m = i + 1;
+                                    while (m < n && src[m] == '=') { e2++; m++; }
+                                    if (e2 == eq && m < n && src[m] == ']')
+                                    { sb.Append(src, i, m - i + 1); i = m + 1; break; }
+                                }
+                                sb.Append(src[i]); i++;
+                            }
+                            continue;
+                        }
+                    }
+                    while (i < n && src[i] != '\n') { sb.Append(src[i]); i++; }
+                    continue;
+                }
+
+                // ── Skip long string ─────────────────────────────────────────
+                if (src[i] == '[')
+                {
+                    int eq = 0; int k = i + 1;
+                    while (k < n && src[k] == '=') { eq++; k++; }
+                    if (k < n && src[k] == '[')
+                    {
+                        sb.Append(src, i, k - i + 1); i = k + 1;
+                        while (i < n)
+                        {
+                            if (src[i] == ']')
+                            {
+                                int e2 = 0; int m = i + 1;
+                                while (m < n && src[m] == '=') { e2++; m++; }
+                                if (e2 == eq && m < n && src[m] == ']')
+                                { sb.Append(src, i, m - i + 1); i = m + 1; break; }
+                            }
+                            sb.Append(src[i]); i++;
+                        }
+                        continue;
+                    }
+                }
+
+                // ── Skip short string ─────────────────────────────────────────
+                if (src[i] == '"' || src[i] == '\'')
+                {
+                    char q = src[i]; sb.Append(q); i++;
+                    while (i < n && src[i] != q)
+                    {
+                        if (src[i] == '\\') { sb.Append(src[i]); i++; }
+                        if (i < n) { sb.Append(src[i]); i++; }
+                    }
+                    if (i < n) { sb.Append(src[i]); i++; }
+                    continue;
+                }
+
+                // ── Rewrite operators ─────────────────────────────────────────
+                char c = src[i];
+
+                // != → ~=
+                if (c == '!' && i + 1 < n && src[i + 1] == '=')
+                {
+                    sb.Append("~="); i += 2; continue;
+                }
+
+                // ! → not  (standalone, not part of !=)
+                if (c == '!')
+                {
+                    sb.Append("not "); i++; continue;
+                }
+
+                // && → and
+                if (c == '&' && i + 1 < n && src[i + 1] == '&')
+                {
+                    sb.Append(" and "); i += 2; continue;
+                }
+
+                // || → or
+                if (c == '|' && i + 1 < n && src[i + 1] == '|')
+                {
+                    sb.Append(" or "); i += 2; continue;
+                }
+
+                sb.Append(c); i++;
+            }
+
+            return sb.ToString();
+        }
+
         // Rewrites Luau generic loops:
         //   for k, v in t do        -> for k, v in pairs(t) do
         //   for v in list do        -> for v in pairs(list) do
@@ -1311,7 +1512,27 @@ namespace FoulzExternal.features.games.universal.scriptrunner
                     continue;
 
                 int inIdx = trimmed.IndexOf(" in ", StringComparison.Ordinal);
-                int doIdx = trimmed.LastIndexOf(" do", StringComparison.Ordinal);
+
+                // Strip inline comment before searching for the 'do' keyword, so that
+                // a comment like  "-- some do stuff"  on the same line doesn't
+                // produce a wrong doIdx and corrupt the iterator expression.
+                string forSearchLine = trimmed;
+                for (int ci = 0; ci + 1 < trimmed.Length; ci++)
+                {
+                    if (trimmed[ci] == '-' && trimmed[ci + 1] == '-')
+                    {
+                        forSearchLine = trimmed.Substring(0, ci);
+                        break;
+                    }
+                }
+                int doIdx = forSearchLine.LastIndexOf(" do", StringComparison.Ordinal);
+                // Word-boundary check: 'do' must not be followed by a letter, digit, or '_'
+                // (guards against matching " doSomething" etc.)
+                if (doIdx >= 0 && doIdx + 3 < forSearchLine.Length)
+                {
+                    char after = forSearchLine[doIdx + 3];
+                    if (char.IsLetterOrDigit(after) || after == '_') doIdx = -1;
+                }
                 if (inIdx <= 0 || doIdx <= inIdx)
                     continue;
 
@@ -1408,8 +1629,8 @@ function __step_threads(now)
 end
 
 -- Minimum wait matches Roblox heartbeat (~1/60s). Without this floor,
--- task.wait() / wait() with 0 would pump at ~100Hz and cause scripts like
--- velocity multipliers to compound exponentially instead of per-frame.
+-- wait() with 0 would pump at unlimited speed. task.wait(0) is allowed to
+-- yield for a single tick (wake=0) so inner VM schedulers can pace themselves.
 local __MIN_WAIT = 1 / 60
 
 function wait(secs)
@@ -1454,7 +1675,23 @@ local function __cancel_impl(co)
     end
 end
 
-task = { wait = wait, spawn = spawn, defer = __defer_impl, cancel = __cancel_impl }
+task = {
+    -- task.wait(0) yields once without a minimum floor so inner VM schedulers
+    -- can step rapidly. Explicit positive values respect __MIN_WAIT.
+    wait = function(secs)
+        secs = tonumber(secs) or 0
+        if secs > 0 then secs = math.max(secs, __MIN_WAIT) end
+        local _, isMain = coroutine.running()
+        if isMain then
+            _wait_blocking(secs > 0 and secs or 0)
+            return secs
+        end
+        return coroutine.yield(secs)
+    end,
+    spawn = spawn,
+    defer = __defer_impl,
+    cancel = __cancel_impl,
+}
 
 math.clamp = math.clamp or function(v, minv, maxv)
     if v < minv then return minv end
@@ -1516,6 +1753,31 @@ setfenv = setfenv or function(target, env)
         return target
     end
     return target
+end
+
+-- Roblox Luau: table.create(count [, value])
+-- Returns a table pre-filled with `value` (or nil) repeated `count` times.
+table.create = table.create or function(count, value)
+    local t = {}
+    for i = 1, count do
+        t[i] = value
+    end
+    return t
+end
+
+-- Roblox Luau: table.clear(t) — removes all keys from a table in-place.
+table.clear = table.clear or function(t)
+    for k in next, t do
+        rawset(t, k, nil)
+    end
+end
+
+-- Roblox Luau: table.find(t, value [, init]) — linear search, returns index or nil.
+table.find = table.find or function(t, value, init)
+    for i = (init or 1), #t do
+        if t[i] == value then return i end
+    end
+    return nil
 end
 
 bit32 = bit32 or {}
@@ -1592,6 +1854,15 @@ bit32.replace = bit32.replace or function(value, replacement, field, width)
     width = tonumber(width) or 1
     local mask = (((1 << width) - 1) << field) & 0xFFFFFFFF
     return ((value & (~mask)) | ((replacement << field) & mask)) & 0xFFFFFFFF
+end
+
+bit32.btest = bit32.btest or function(...)
+    local args = table.pack(...)
+    local result = 0xFFFFFFFF
+    for i = 1, args.n do
+        result = result & (tonumber(args[i]) or 0)
+    end
+    return (result & 0xFFFFFFFF) ~= 0
 end
 
 local function __read_vector(self, key)
@@ -2009,13 +2280,14 @@ if game ~= nil then
     local game_mt = {}
     
     function game_mt.__index(self, key)
+        -- Fast-path: direct numeric/string properties exposed by C# LuaInstance
+        if key == "GameId" or key == "PlaceId" or key == "Name" then
+            return game_csharp[key]
+        end
+
         -- Try key "GetService" to return a bound method
         if key == "GetService" then
             return function(self, name)
-                if game_csharp.GetService == nil then
-                    warn("[proxy] GetService method not found on game_csharp")
-                    return nil
-                end
                 local result = game_csharp:GetService(name)
                 return make_instance_children_accessor(result)
             end
@@ -2035,20 +2307,12 @@ if game ~= nil then
         end
         
         -- Fallback to GetService for convenience (game.Players instead of game:GetService("Players"))
-        if game_csharp.GetService == nil then
-            warn("[proxy] GetService method not found, key=" .. tostring(key))
-            return nil
+        local ok, result = pcall(function() return game_csharp:GetService(key) end)
+        if ok and result ~= nil then
+            return make_instance_children_accessor(result)
         end
         
-        local result = game_csharp:GetService(key)
-        
-        if result == nil then
-            warn("[proxy] GetService(" .. tostring(key) .. ") returned nil")
-        else
-            print("[proxy] GetService(" .. tostring(key) .. ") returned: " .. tostring(result))
-        end
-        
-        return make_instance_children_accessor(result)
+        return nil
     end
     
     function game_mt.__newindex(self, key, value)

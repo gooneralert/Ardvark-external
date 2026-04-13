@@ -213,6 +213,9 @@ namespace IMGUI
             try
             {
                 var scriptObjects = new List<LuaDrawingObject>(ScriptDrawingLayer.Snapshot());
+                // Sort by ZIndex ascending so lower ZIndex draws first (behind higher ZIndex).
+                // Objects with equal ZIndex preserve their creation order via stable sort.
+                scriptObjects.Sort((a, b) => a.ZIndex.CompareTo(b.ZIndex));
                 RenderScriptCapture(scriptObjects);
 
                 var sd = ImGui.GetForegroundDrawList();
