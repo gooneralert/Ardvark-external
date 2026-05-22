@@ -390,6 +390,90 @@ namespace FoulzExternal.features.games.universal.scriptrunner
             lua["memory_read"]  = new Func<string, long, object?>(MemRead);
             lua["memory_write"] = new Action<string, long, object?>(MemWrite);
             lua["getbase"]      = new Func<long>(() => SDKInst.Mem?.Base ?? 0);
+
+            // ── Offsets table (exposes Roblox memory offsets to Lua scripts) ──
+            lua["offsets"] = new Dictionary<string, long>
+            {
+                // Camera
+                ["CameraPos"] = Offsets.Camera.Position,
+                ["CameraRotation"] = Offsets.Camera.Rotation,
+                ["CameraFOV"] = Offsets.Camera.FieldOfView,
+                ["CameraViewportSize"] = Offsets.Camera.ViewportSize,
+                ["CameraSubject"] = Offsets.Camera.CameraSubject,
+                ["CameraType"] = Offsets.Camera.CameraType,
+
+                // Primitive / BasePart
+                ["Primitive"] = Offsets.BasePart.Primitive,
+                ["PrimitivePosition"] = Offsets.Primitive.Position,
+                ["PrimitiveRotation"] = Offsets.Primitive.Rotation,
+                ["PrimitiveSize"] = Offsets.Primitive.Size,
+                ["PrimitiveVelocity"] = Offsets.Primitive.AssemblyLinearVelocity,
+                ["PrimitiveAngularVelocity"] = Offsets.Primitive.AssemblyAngularVelocity,
+                ["PrimitiveFlags"] = Offsets.Primitive.Flags,
+
+                // BasePart
+                ["PartColor"] = Offsets.BasePart.Color3,
+                ["PartTransparency"] = Offsets.BasePart.Transparency,
+                ["PartReflectance"] = Offsets.BasePart.Reflectance,
+                ["PartShape"] = Offsets.BasePart.Shape,
+                ["PartLocked"] = Offsets.BasePart.Locked,
+                ["PartCastShadow"] = Offsets.BasePart.CastShadow,
+
+                // Humanoid
+                ["HumanoidHealth"] = Offsets.Humanoid.Health,
+                ["HumanoidMaxHealth"] = Offsets.Humanoid.MaxHealth,
+                ["HumanoidWalkSpeed"] = Offsets.Humanoid.Walkspeed,
+                ["HumanoidJumpPower"] = Offsets.Humanoid.JumpPower,
+                ["HumanoidHipHeight"] = Offsets.Humanoid.HipHeight,
+                ["HumanoidJumpHeight"] = Offsets.Humanoid.JumpHeight,
+                ["HumanoidRootPart"] = Offsets.Humanoid.HumanoidRootPart,
+                ["HumanoidState"] = Offsets.Humanoid.HumanoidStateID,
+                ["HumanoidAutoJump"] = Offsets.Humanoid.AutoJumpEnabled,
+                ["HumanoidSit"] = Offsets.Humanoid.Sit,
+
+                // Instance
+                ["InstanceParent"] = Offsets.Instance.Parent,
+                ["InstanceName"] = Offsets.Instance.Name,
+                ["InstanceClassName"] = Offsets.Instance.ClassName,
+                ["InstanceChildren"] = Offsets.Instance.ChildrenStart,
+
+                // DataModel
+                ["DataModelPlaceId"] = Offsets.DataModel.PlaceId,
+                ["DataModelGameId"] = Offsets.DataModel.GameId,
+                ["DataModelJobId"] = Offsets.DataModel.JobId,
+                ["DataModelWorkspace"] = Offsets.DataModel.Workspace,
+
+                // Player
+                ["PlayerUserId"] = Offsets.Player.UserId,
+                ["PlayerLocalPlayer"] = Offsets.Player.LocalPlayer,
+                ["PlayerTeam"] = Offsets.Player.Team,
+                ["PlayerCharacter"] = Offsets.Player.ModelInstance,
+
+                // Model
+                ["ModelPrimaryPart"] = Offsets.Model.PrimaryPart,
+
+                // Workspace
+                ["WorkspaceCurrentCamera"] = Offsets.Workspace.CurrentCamera,
+                ["WorkspaceGravity"] = Offsets.World.Gravity,
+
+                // Lighting
+                ["LightingBrightness"] = Offsets.Lighting.Brightness,
+                ["LightingAmbient"] = Offsets.Lighting.Ambient,
+                ["LightingClockTime"] = Offsets.Lighting.ClockTime,
+                ["LightingFogStart"] = Offsets.Lighting.FogStart,
+                ["LightingFogEnd"] = Offsets.Lighting.FogEnd,
+                ["LightingFogColor"] = Offsets.Lighting.FogColor,
+
+                // GUI
+                ["GuiText"] = Offsets.GuiObject.Text,
+                ["GuiVisible"] = Offsets.GuiObject.Visible,
+                ["GuiBackgroundColor"] = Offsets.GuiObject.BackgroundColor3,
+                ["GuiBackgroundTransparency"] = Offsets.GuiObject.BackgroundTransparency,
+                ["GuiPosition"] = Offsets.GuiObject.Position,
+                ["GuiSize"] = Offsets.GuiObject.Size,
+                ["GuiAbsolutePosition"] = Offsets.GuiBase2D.AbsolutePosition,
+                ["GuiAbsoluteSize"] = Offsets.GuiBase2D.AbsoluteSize,
+            };
             // ── WorldToScreen ──────────────────────────────────────────────────
             lua["WorldToScreen"] = new Func<object, object[]>(value =>
             {
@@ -901,7 +985,7 @@ namespace FoulzExternal.features.games.universal.scriptrunner
                     "bool"             => (object)SDKInst.Mem.Read<bool>(addr),
                     "string"           => SDKInst.Mem.ReadString(addr),
                     // Pointer types
-                    "pointer" or "ptr" => (double)(ulong)SDKInst.Mem.ReadPtr(addr),
+                    "pointer" or "ptr" or "uintptr_t" => (double)(ulong)SDKInst.Mem.ReadPtr(addr),
                     // Vector types - return as wrapped Lua values
                     "vector3" => ReadVector3(addr),
                     "vector2" => ReadVector2(addr),
@@ -974,6 +1058,7 @@ namespace FoulzExternal.features.games.universal.scriptrunner
                     // Pointer types
                     case "pointer":
                     case "ptr":
+                    case "uintptr_t":
                         SDKInst.Mem.Write(addr, (long)Convert.ToUInt64(value));
                         break;
                     // Vector types

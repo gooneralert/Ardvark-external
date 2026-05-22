@@ -221,7 +221,15 @@ namespace FoulzExternal.SDK
         public sCFrame GetCFrame()
         {
             long prim = Mem.ReadPtr(Address + Offsets.BasePart.Primitive);
-            return Mem.Read<sCFrame>(prim + 0x11C);
+            var rot = Mem.Read<Matrix3x3>(prim + Offsets.Primitive.Rotation);
+            var pos = Mem.Read<Vector3>(prim + Offsets.Primitive.Position);
+            return new sCFrame
+            {
+                r00 = rot.r00, r01 = rot.r01, r02 = rot.r02,
+                r10 = rot.r10, r11 = rot.r11, r12 = rot.r12,
+                r20 = rot.r20, r21 = rot.r21, r22 = rot.r22,
+                x = pos.x, y = pos.y, z = pos.z,
+            };
         }
 
         public string GetSpecialMeshID()
