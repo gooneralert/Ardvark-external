@@ -3,9 +3,9 @@
 /*               https://imtheo.lol/Offsets                     
 /* -------------------------------------------------------------
 /*  Dumped By       : theo (https://imtheo.lol)                 
-/*  Roblox Version  : version-4b6315bf1f0a4dbb
+/*  Roblox Version  : version-2b1721d47abf49aa
 /*  Dumper Version  : 2.1.6
-/*  Dumped At       : 20:49 21/05/2026 (GMT)
+/*  Dumped At       : 20:47 23/05/2026 (GMT)
 /*  Total Offsets   : 381
 /* -------------------------------------------------------------
 /*  Join the discord!                                           
@@ -15,7 +15,7 @@
 
 namespace Offsets {
     public static class Info {
-        public static string ClientVersion = "version-4b6315bf1f0a4dbb";
+        public static string ClientVersion = "version-2b1721d47abf49aa";
     }
 
     public static class AirProperties {
@@ -26,7 +26,7 @@ namespace Offsets {
     public static class AnimationTrack {
          public const long Animation = 0xd0;
          public const long Animator = 0x118;
-         public const long IsPlaying = 0xa10;
+         public const long IsPlaying = 0xa18;
          public const long Looped = 0xf5;
          public const long Speed = 0xe4;
          public const long TimePosition = 0xe8;
@@ -172,7 +172,7 @@ namespace Offsets {
     }
 
     public static class FakeDataModel {
-         public const long Pointer = 0x7868a68;
+         public const long Pointer = 0x74f6758;
          public const long RealDataModel = 0x1d0;
     }
 
@@ -196,7 +196,7 @@ namespace Offsets {
          public const long Text = 0xda8;
          public const long TextColor3 = 0xe58;
          public const long Visible = 0x5b5;
-         public const long ZIndex = 0x19b;
+         public const long ZIndex = 0x5ac;
     }
 
     public static class Humanoid {
@@ -213,10 +213,10 @@ namespace Offsets {
          public const long HealthDisplayDistance = 0x198;
          public const long HealthDisplayType = 0x19c;
          public const long HipHeight = 0x1a0;
-         public const long HumanoidRootPart = 0x480;
-         public const long HumanoidState = 0x8a0;
+         public const long HumanoidRootPart = 0x488;
+         public const long HumanoidState = 0x8a8;
          public const long HumanoidStateID = 0x20;
-         public const long IsWalking = 0x91f;
+         public const long IsWalking = 0x927;
          public const long Jump = 0x1e6;
          public const long JumpHeight = 0x1ac;
          public const long JumpPower = 0x1b0;
@@ -234,7 +234,7 @@ namespace Offsets {
          public const long Sit = 0x1e9;
          public const long TargetPoint = 0x164;
          public const long UseJumpPower = 0x1ec;
-         public const long WalkTimer = 0x410;
+         public const long WalkTimer = 0x418;
          public const long Walkspeed = 0x1dc;
          public const long WalkspeedCheck = 0x3c4;
     }
@@ -472,7 +472,7 @@ namespace Offsets {
     }
 
     public static class SpawnLocation {
-         public const long AllowTeamChangeOnTouch = 0x1f8;
+         public const long AllowTeamChangeOnTouch = 0x45;
          public const long Enabled = 0x1f9;
          public const long ForcefieldDuration = 0x1f0;
          public const long Neutral = 0x1fa;
@@ -511,7 +511,7 @@ namespace Offsets {
          public const long JobName = 0x18;
          public const long JobStart = 0xc8;
          public const long MaxFPS = 0xb0;
-         public const long Pointer = 0x7f7c478;
+         public const long Pointer = 0x7bfe988;
     }
 
     public static class Team {
@@ -562,8 +562,8 @@ namespace Offsets {
     public static class VisualEngine {
          public const long Dimensions = 0xaa0;
          public const long FakeDataModel = 0xa80;
-         public const long Pointer = 0x7f52cf0;
-         public const long RenderView = 0xb90;
+         public const long Pointer = 0x7bd51f8;
+         public const long RenderView = 0xb80;
          public const long ViewMatrix = 0x140;
     }
 
