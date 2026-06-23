@@ -1067,13 +1067,7 @@ namespace FoulzExternal.features.games.universal.scriptrunner
         {
             try
             {
-                var child = FindFirstChild(name);
-                if (child != null)
-                {
-                    var childValue = child.Value;
-                    if (childValue != null) return childValue;
-                }
-
+                // Read attribute directly from Roblox memory via ComponentMap
                 string raw = _inst.GetAttribute(name);
                 if (!string.IsNullOrEmpty(raw))
                 {
@@ -1082,7 +1076,7 @@ namespace FoulzExternal.features.games.universal.scriptrunner
                     return raw;
                 }
 
-                return _attributes.TryGetValue(Address + ":" + name, out var value) ? value : null;
+                return null;
             }
             catch { return null; }
         }
