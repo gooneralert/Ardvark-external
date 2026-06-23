@@ -512,17 +512,36 @@ namespace FoulzExternal.features.games.universal.scriptrunner
 
             try
             {
-                long attrContainer = SDKInst.Mem.ReadPtr(_inst.Address + Offsets.Instance.AttributeContainer);
-                long attrList = attrContainer != 0 ? SDKInst.Mem.ReadPtr(attrContainer + Offsets.Instance.AttributeList) : 0;
-                if (attrList != 0)
+                // Walk the ComponentMap to enumerate all attribute names
+                long component = SDKInst.Mem.ReadPtr(_inst.Address + Offsets.Instance.ComponentMap);
+                if (component != 0)
                 {
-                    for (int i = 0; i < 0x1000; i += (int)Offsets.Instance.AttributeToNext)
+                    long start = SDKInst.Mem.ReadPtr(component);
+                    long end = SDKInst.Mem.ReadPtr(component + 8);
+
+                    if (start != 0 && end != 0 && end > start)
                     {
-                        long namePtr = SDKInst.Mem.ReadPtr(attrList + i);
-                        string attrName = LuaHelpers.ReadRobloxString(namePtr);
-                        if (string.IsNullOrEmpty(attrName))
-                            break;
-                        values[attrName] = LuaHelpers.ParseAttributeValue(_inst.GetAttribute(attrName));
+                        for (long index = 0; index < end - start; index += 0x10)
+                        {
+                            long entry = SDKInst.Mem.ReadPtr(start + index);
+                            if (entry == 0) continue;
+
+                            long listing = SDKInst.Mem.ReadPtr(entry + 0x10);
+                            if (listing == 0) continue;
+
+                            for (int step = 0; step < (int)Offsets.Attribute.Size * 32; step += (int)Offsets.Attribute.Size)
+                            {
+                                long namePtr = SDKInst.Mem.ReadPtr(listing + step + Offsets.Attribute.Key);
+                                if (namePtr == 0) break;
+
+                                string attrName = LuaHelpers.ReadRobloxString(namePtr);
+                                if (string.IsNullOrEmpty(attrName) || attrName.Length > 128)
+                                    break;
+
+                                string raw = _inst.GetAttribute(attrName);
+                                values[attrName] = LuaHelpers.ParseAttributeValue(raw);
+                            }
+                        }
                     }
                 }
             }
@@ -739,6 +758,20 @@ namespace FoulzExternal.features.games.universal.scriptrunner
                             r21 = native.r21,
                             r22 = native.r22,
                         });
+                        // Also write to the primitive CFrame so the engine does not
+                        // interpolate between render and physics positions (causes
+                        // black-screen/directional flickering).
+                        long camPrim = SDKInst.Mem.ReadPtr(_inst.Address + Offsets.BasePart.Primitive);
+                        if (camPrim != 0)
+                        {
+                            SDKInst.Mem.Write(camPrim + Offsets.Primitive.Position, new Vector3 { x = native.x, y = native.y, z = native.z });
+                            SDKInst.Mem.Write(camPrim + Offsets.Primitive.Rotation, new Matrix3x3
+                            {
+                                r00 = native.r00, r01 = native.r01, r02 = native.r02,
+                                r10 = native.r10, r11 = native.r11, r12 = native.r12,
+                                r20 = native.r20, r21 = native.r21, r22 = native.r22,
+                            });
+                        }
                         return;
                     }
 

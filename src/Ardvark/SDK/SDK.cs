@@ -146,64 +146,68 @@ namespace FoulzExternal.SDK
         public long GetPlaceID() => Mem.Read<long>(Address + Offsets.DataModel.PlaceId);
         public long GetGameID() => Mem.Read<long>(Address + Offsets.DataModel.GameId);
 
-        public string GetAttribute(string attrName)
+        /// <summary>
+        /// Finds an attribute by name using the ComponentMap-based attribute system.
+        /// ComponentMap is a struct containing (Start, End) pointers. Each slot between
+        /// Start and End is a 0x10-byte entry pointing to an AttributeListing.
+        /// Each listing contains multiple Attribute entries of size Attribute.Size,
+        /// each with a Key (name pointer) and Value.
+        /// </summary>
+        private long FindAttributeEntry(string attrName)
         {
-            long attr_container = Mem.ReadPtr(Address + Offsets.Instance.AttributeContainer);
-            if (attr_container == 0) return "";
-            long attr_list = Mem.ReadPtr(attr_container + Offsets.Instance.AttributeList);
-            if (attr_list == 0) return "";
+            long component = Mem.ReadPtr(Address + Offsets.Instance.ComponentMap);
+            if (component == 0) return 0;
 
-            for (int i = 0x0; i < 0x1000; i += (int)Offsets.Instance.AttributeToNext)
+            long start = Mem.ReadPtr(component);
+            long end = Mem.ReadPtr(component + 8);
+
+            if (start == 0 || end == 0 || end <= start)
+                return 0;
+
+            for (long index = 0; index < end - start; index += 0x10)
             {
-                long namePtr = Mem.ReadPtr(attr_list + i);
-                string name = FetchString(namePtr);
-                if (string.IsNullOrEmpty(name)) break;
+                long entry = Mem.ReadPtr(start + index);
+                if (entry == 0) continue;
 
-                if (name == attrName)
+                long listing = Mem.ReadPtr(entry + 0x10);
+                if (listing == 0) continue;
+
+                for (int step = 0; step < (int)Offsets.Attribute.Size * 32; step += (int)Offsets.Attribute.Size)
                 {
-                    return FetchString(attr_list + i + Offsets.Instance.AttributeToValue);
+                    long namePtr = Mem.ReadPtr(listing + step + Offsets.Attribute.Key);
+                    if (namePtr == 0) break;
+
+                    string name = FetchString(namePtr);
+                    if (string.IsNullOrEmpty(name) || name.Length > 128)
+                        break;
+
+                    if (name == attrName)
+                        return listing + step;
                 }
             }
-            return "";
+
+            return 0;
+        }
+
+        public string GetAttribute(string attrName)
+        {
+            long entry = FindAttributeEntry(attrName);
+            if (entry == 0) return "";
+            return FetchString(entry + Offsets.Attribute.Value);
         }
 
         public T GetAttributeValue<T>(string attrName) where T : struct
         {
-            long attr_container = Mem.ReadPtr(Address + Offsets.Instance.AttributeContainer);
-            if (attr_container == 0) return default;
-            long attr_list = Mem.ReadPtr(attr_container + Offsets.Instance.AttributeList);
-            if (attr_list == 0) return default;
-
-            for (int i = 0x0; i < 0x1000; i += (int)Offsets.Instance.AttributeToNext)
-            {
-                long namePtr = Mem.ReadPtr(attr_list + i);
-                string name = FetchString(namePtr);
-                if (string.IsNullOrEmpty(name)) break;
-
-                if (name == attrName) return Mem.Read<T>(attr_list + i + Offsets.Instance.AttributeToValue);
-            }
-            return default;
+            long entry = FindAttributeEntry(attrName);
+            if (entry == 0) return default;
+            return Mem.Read<T>(entry + Offsets.Attribute.Value);
         }
 
         public void SetAttributeValue<T>(string attrName, T value) where T : struct
         {
-            long attr_container = Mem.ReadPtr(Address + Offsets.Instance.AttributeContainer);
-            if (attr_container == 0) return;
-            long attr_list = Mem.ReadPtr(attr_container + Offsets.Instance.AttributeList);
-            if (attr_list == 0) return;
-
-            for (int i = 0x0; i < 0x1000; i += (int)Offsets.Instance.AttributeToNext)
-            {
-                long namePtr = Mem.ReadPtr(attr_list + i);
-                string name = FetchString(namePtr);
-                if (string.IsNullOrEmpty(name)) break;
-
-                if (name == attrName)
-                {
-                    Mem.Write<T>(attr_list + i + Offsets.Instance.AttributeToValue, value);
-                    break;
-                }
-            }
+            long entry = FindAttributeEntry(attrName);
+            if (entry == 0) return;
+            Mem.Write(entry + Offsets.Attribute.Value, value);
         }
 
         public Vector3 GetPosition()

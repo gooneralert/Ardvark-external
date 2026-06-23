@@ -174,10 +174,30 @@ namespace FoulzExternal.SDK.structures
 
         public static sCFrame LookAt(Vector3 pos, Vector3 target, Vector3 up)
         {
-            Vector3 f = (target - pos).Normalize();
-            Vector3 r = f.Cross(up).Normalize();
-            Vector3 u = r.Cross(f);
-            return new sCFrame { r00 = r.x, r01 = u.x, r02 = f.x, r10 = r.y, r11 = u.y, r12 = f.y, r20 = r.z, r21 = u.z, r22 = f.z, x = pos.x, y = pos.y, z = pos.z };
+            Vector3 dir = target - pos;
+            float len = dir.Magnitude();
+            // Prevent NaN when target ≈ pos (causes black screen)
+            if (len < 1e-6f)
+            {
+                return new sCFrame
+                {
+                    r00 = 1, r01 = 0, r02 = 0,
+                    r10 = 0, r11 = 1, r12 = 0,
+                    r20 = 0, r21 = 0, r22 = 1,
+                    x = pos.x, y = pos.y, z = pos.z,
+                };
+            }
+
+            Vector3 f = dir / len;               // forward direction
+            Vector3 r = f.Cross(up).Normalize(); // right = forward × up
+            if (r.Magnitude() < 1e-6f)
+            {
+                r = new Vector3 { x = 0, y = 0, z = 1 };
+                r = f.Cross(r).Normalize();
+            }
+            Vector3 u = r.Cross(f);               // up = right × forward
+            // Column 2 stores the back vector; LookVector = -column2
+            return new sCFrame { r00 = r.x, r01 = u.x, r02 = -f.x, r10 = r.y, r11 = u.y, r12 = -f.y, r20 = r.z, r21 = u.z, r22 = -f.z, x = pos.x, y = pos.y, z = pos.z };
         }
     }
     internal static class MathF
