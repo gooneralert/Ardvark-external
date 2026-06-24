@@ -184,7 +184,7 @@
                      Padding="8"
                      TextWrapping="NoWrap"
                      SpellCheck.IsEnabled="False"
-                     Text="-- Write your script here&#x0a;print(&quot;Hello from FoulzExternal!&quot;)"/>
+                     Text="-- Write your script here&#x0a;print(&quot;Delete everything and paste your script!&quot;)"/>
         </Border>
 
         <!-- Run / Stop row -->

@@ -179,24 +179,67 @@ namespace FoulzExternal.features.games.universal.flight
                     }
 
                     bool moving = moveDir.Magnitude() > 0.001f;
-                    Vector3 velocity;
+                    int method = Options.Settings.Flight.VFlightMethod;
 
-                    if (moving)
+                    if (method == 0)
                     {
-                        moveDir = moveDir.Normalize();
-                        velocity = moveDir * speed;
-                        flyPos = flyPos + velocity * dt;
+                        // ── Method 0: Position-based (accumulate position) ─────────
+                        if (moving)
+                        {
+                            moveDir = moveDir.Normalize();
+                            flyPos = flyPos + moveDir * speed * dt;
+                        }
+                        mem.Write(prim + Offsets.Primitive.Position, flyPos);
+                        mem.Write(prim + Offsets.Primitive.AssemblyLinearVelocity, new Vector3 { x = 0, y = 0, z = 0 });
                     }
                     else
                     {
-                        velocity = new Vector3 { x = 0, y = 0, z = 0 };
+                        // ── Method 1: Velocity-based (write velocity directly) ─────
+                        // Reads camera forward/right and applies velocity matching the
+                        // Python reference implementation.
+                        Vector3 velocity;
+                        if (moving)
+                        {
+                            moveDir = moveDir.Normalize();
+                            velocity = new Vector3
+                            {
+                                x = moveDir.x * speed,
+                                y = moveDir.y * speed,
+                                z = moveDir.z * speed,
+                            };
+                        }
+                        else
+                        {
+                            velocity = new Vector3 { x = 0, y = 0, z = 0 };
+                        }
+                        mem.Write(prim + Offsets.Primitive.AssemblyLinearVelocity, velocity);
+                        // Also include full 3D camera direction for velocity method
+                        // instead of just XZ plane, so WASD works when looking up/down.
+                        Vector3 fullForward = new Vector3 { x = -rot.r02, y = -rot.r12, z = -rot.r22 };
+                        Vector3 fullRight = new Vector3 { x = rot.r00, y = rot.r10, z = rot.r20 };
+                        Vector3 fullUp = new Vector3 { x = rot.r01, y = rot.r11, z = rot.r21 };
+                        Vector3 vel3D = new() { x = 0, y = 0, z = 0 };
+                        if (focused)
+                        {
+                            if (Key(0x57)) vel3D = vel3D + fullForward;   // W
+                            if (Key(0x53)) vel3D = vel3D - fullForward;   // S
+                            if (Key(0x41)) vel3D = vel3D - fullRight;     // A
+                            if (Key(0x44)) vel3D = vel3D + fullRight;     // D
+                            if (Key(0x20)) vel3D = vel3D + fullUp;        // Space
+                            if (Key(0xA0)) vel3D = vel3D - fullUp;        // Shift
+                        }
+                        if (vel3D.Magnitude() > 0.001f)
+                        {
+                            vel3D = vel3D.Normalize();
+                            mem.Write(prim + Offsets.Primitive.AssemblyLinearVelocity, new Vector3
+                            {
+                                x = vel3D.x * speed,
+                                y = vel3D.y * speed,
+                                z = vel3D.z * speed,
+                            });
+                        }
                     }
 
-                    // --- write position + velocity every frame ---
-                    // Position = authoritative placement (no drift/rubber-band)
-                    // Velocity = tells physics engine our intent (smooth interpolation between writes)
-                    mem.Write(prim + Offsets.Primitive.Position, flyPos);
-                    mem.Write(prim + Offsets.Primitive.AssemblyLinearVelocity, velocity);
                     mem.Write(prim + Offsets.Primitive.AssemblyAngularVelocity, new Vector3 { x = 0, y = 0, z = 0 });
 
                     // --- fake shift lock: rotate character to face camera yaw ---

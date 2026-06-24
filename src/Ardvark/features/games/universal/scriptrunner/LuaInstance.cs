@@ -1011,10 +1011,10 @@ namespace FoulzExternal.features.games.universal.scriptrunner
 
                         return Name;
                     }
-                    if (cls == "IntValue")     return (double)SDKInst.Mem.Read<int>(_inst.Address + 0x60);
-                    if (cls == "NumberValue" || cls == "FloatValue")  return (double)SDKInst.Mem.Read<double>(_inst.Address + 0x60);
-                    if (cls == "BoolValue")    return SDKInst.Mem.Read<bool>(_inst.Address + 0x60);
-                    if (cls == "ObjectValue")  { long addr = SDKInst.Mem.ReadPtr(_inst.Address + 0x60); return addr > 0x1000 ? new LuaInstance(addr) : null; }
+                    if (cls == "IntValue")     return (double)SDKInst.Mem.Read<int>(_inst.Address + Offsets.Misc.Value);
+                    if (cls == "NumberValue" || cls == "FloatValue")  return (double)SDKInst.Mem.Read<double>(_inst.Address + Offsets.Misc.Value);
+                    if (cls == "BoolValue")    return SDKInst.Mem.Read<bool>(_inst.Address + Offsets.Misc.Value);
+                    if (cls == "ObjectValue")  { long addr = SDKInst.Mem.ReadPtr(_inst.Address + Offsets.Misc.Value); return addr > 0x1000 ? new LuaInstance(addr) : null; }
                     return null;
                 }
                 catch { return ClassName == "StringValue" ? Name : null; }
@@ -1094,18 +1094,18 @@ namespace FoulzExternal.features.games.universal.scriptrunner
                 switch (instance.ClassName)
                 {
                     case "IntValue":
-                        SDKInst.Mem.Write(instance._inst.Address + 0x60, Convert.ToInt32(value ?? 0));
+                        SDKInst.Mem.Write(instance._inst.Address + Offsets.Misc.Value, Convert.ToInt32(value ?? 0));
                         break;
                     case "NumberValue":
                     case "FloatValue":
-                        SDKInst.Mem.Write(instance._inst.Address + 0x60, Convert.ToDouble(value ?? 0d));
+                        SDKInst.Mem.Write(instance._inst.Address + Offsets.Misc.Value, Convert.ToDouble(value ?? 0d));
                         break;
                     case "BoolValue":
-                        SDKInst.Mem.Write(instance._inst.Address + 0x60, Convert.ToBoolean(value ?? false));
+                        SDKInst.Mem.Write(instance._inst.Address + Offsets.Misc.Value, Convert.ToBoolean(value ?? false));
                         break;
                     case "ObjectValue":
                         if (value is LuaInstance obj)
-                            SDKInst.Mem.Write(instance._inst.Address + 0x60, obj.Address);
+                            SDKInst.Mem.Write(instance._inst.Address + Offsets.Misc.Value, obj.Address);
                         break;
                 }
             }

@@ -292,8 +292,13 @@ namespace FoulzExternal.games.universal.aiming
             var camPos = SDKInstance.Mem.Read<Vector3>(cam + Offsets.Camera.Position);
             var lookAt = sCFrame.LookAt(camPos, target, new Vector3 { x = 0, y = 1, z = 0 });
 
-            Vector3 r = lookAt.RightVector; Vector3 u = lookAt.UpVector; Vector3 l = lookAt.LookVector;
-            Matrix3x3 targetMat = new Matrix3x3 { r00 = r.x, r01 = u.x, r02 = l.x, r10 = r.y, r11 = u.y, r12 = l.y, r20 = r.z, r21 = u.z, r22 = l.z };
+            // Copy rotation directly from sCFrame (same layout as Matrix3x3)
+            Matrix3x3 targetMat = new Matrix3x3
+            {
+                r00 = lookAt.r00, r01 = lookAt.r01, r02 = lookAt.r02,
+                r10 = lookAt.r10, r11 = lookAt.r11, r12 = lookAt.r12,
+                r20 = lookAt.r20, r21 = lookAt.r21, r22 = lookAt.r22
+            };
 
             Vector4 curQ = Vector4.FromMatrix(curRot);
             Vector4 tarQ = Vector4.FromMatrix(targetMat);
@@ -306,7 +311,19 @@ namespace FoulzExternal.games.universal.aiming
                 if (slow > 0 && t < 0.01f) t = 0.01f;
             }
 
-            SDKInstance.Mem.Write(cam + Offsets.Camera.Rotation, Vector4.Slerp(curQ, tarQ, t).ToMatrix());
+            var slerped = Vector4.Slerp(curQ, tarQ, t).ToMatrix();
+
+            // Write render CFrame
+            SDKInstance.Mem.Write(cam + Offsets.Camera.Position, camPos);
+            SDKInstance.Mem.Write(cam + Offsets.Camera.Rotation, slerped);
+
+            // Also write primitive CFrame to prevent engine interpolation flickering
+            long camPrim = SDKInstance.Mem.ReadPtr(cam + Offsets.BasePart.Primitive);
+            if (camPrim != 0)
+            {
+                SDKInstance.Mem.Write(camPrim + Offsets.Primitive.Position, camPos);
+                SDKInstance.Mem.Write(camPrim + Offsets.Primitive.Rotation, slerped);
+            }
         }
 
         private static Color get_rainbow(float t)

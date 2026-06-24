@@ -140,6 +140,37 @@ namespace Options
 
         public CarFly() { }
     }
+    public class FPS
+    {
+        public bool FPSEnabled = false;
+        public float Value = 60f;
+        public FPS() { }
+    }
+    public class Tickrate
+    {
+        public bool Enabled = false;
+        public float Value = 60f;
+        public Tickrate() { }
+    }
+    public class Gravity
+    {
+        public bool Enabled = false;
+        public float Value = 196.2f;
+        public Gravity() { }
+    }
+    public class ThirdPerson
+    {
+        public bool Enabled = false;
+        public float Distance = 8f;
+        public ThirdPerson() { }
+    }
+    public class InfiniteJump
+    {
+        public bool Enabled = false;
+        public bool CustomPower = false;
+        public float PowerValue = 75f;
+        public InfiniteJump() { }
+    }
     public static class Settings
     {
         public static Humanoid Humanoid = new Humanoid();
@@ -151,5 +182,10 @@ namespace Options
         public static Flight Flight = new Flight();
         public static CarFly CarFly = new CarFly();
         public static Silent Silent = new Silent();
+        public static FPS FPS = new FPS();
+        public static Tickrate Tickrate = new Tickrate();
+        public static Gravity Gravity = new Gravity();
+        public static ThirdPerson ThirdPerson = new ThirdPerson();
+        public static InfiniteJump InfiniteJump = new InfiniteJump();
     }
 }

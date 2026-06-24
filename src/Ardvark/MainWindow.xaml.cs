@@ -6,7 +6,9 @@ using FoulzExternal.features.games.universal.desync;
 using FoulzExternal.features.games.universal.flight;
 using FoulzExternal.features.games.universal.carfly;
 using FoulzExternal.features.games.universal.noclip;
-using FoulzExternal.features.games.universal.spotify;
+using FoulzExternal.features.games.universal.fps;
+using FoulzExternal.features.games.universal.gravity;
+using FoulzExternal.features.games.universal.tickrate;
 using FoulzExternal.games.universal.aiming;
 using FoulzExternal.games.universal.humanoid;
 using FoulzExternal.games.universal.visuals;
@@ -32,9 +34,6 @@ using System.Windows.Media.Animation;
 using System.Windows.Media.Imaging;
 using System.Windows.Shapes;
 using System.Windows.Threading;
-
-// im sorry this whole fucking xaml.cs is the most unoptimized shit i've made compared to the other ones but you can probably sort shit better LOL
-// btw colors on settings tab USE to work but i broke them and i don't feel like fixing shit. add stuff to the settings tab if you feel like it, bc i sure as hell do NOT
 
 namespace FoulzExternal
 {
@@ -525,7 +524,7 @@ namespace FoulzExternal
                     _lookin?.Cancel();
                     _lookin = null;
 
-                    try { player.Start(); playerobjects.Start(); HumanoidModule.Start(); TPHandler.Start(); CameraModule.Start(); visuals.Start(); aiming.Start(); desync.Start(); flight.Start(); carfly.Start(); noclip.Start(); silentaiming.Start(); } catch { }
+                    try { player.Start(); playerobjects.Start(); HumanoidModule.Start(); TPHandler.Start(); CameraModule.Start(); visuals.Start(); aiming.Start(); desync.Start(); flight.Start(); carfly.Start(); noclip.Start(); fps.Start(); gravity.Start(); tickrate.Start(); silentaiming.Start(); } catch { }
 
 
                     Dispatcher.Invoke(() =>
@@ -608,10 +607,9 @@ namespace FoulzExternal
 
         private void startvibing(object sender, RoutedEventArgs e) { ((Storyboard)Resources["FadeInSequence"]).Begin(); settheme(Color.FromRgb(255, 79, 163)); }
 
-        private void bye(object sender, RoutedEventArgs e) { try { HumanoidModule.Stop(); CameraModule.Stop(); visuals.Stop(); TPHandler.Stop(); aiming.Stop(); desync.Stop(); flight.Stop(); silentaiming.Stop(); IMGUI.Program.kill();} catch { } Application.Current.Shutdown(); }
+        private void bye(object sender, RoutedEventArgs e) { try { HumanoidModule.Stop(); CameraModule.Stop(); visuals.Stop(); TPHandler.Stop(); aiming.Stop(); desync.Stop(); flight.Stop(); fps.Stop(); gravity.Stop(); tickrate.Stop(); silentaiming.Stop(); IMGUI.Program.kill();} catch { } Application.Current.Shutdown(); }
 
         protected override void OnMouseLeftButtonDown(MouseButtonEventArgs e) { if (e.ChangedButton == MouseButton.Left) DragMove(); }
-
 
         private void oncheck(object sender, RoutedEventArgs e) { if (_shutup || !(sender is ToggleButton tb)) return; tb.Content = "ON"; if (tb.Name == "WalkspeedToggle") Options.Settings.Humanoid.WalkspeedEnabled = true; else if (tb.Name == "JumpPowerToggle") Options.Settings.Humanoid.JumpPowerEnabled = true; else if (tb.Name == "FovToggle") Options.Settings.Camera.FOVEnabled = true; }
 
@@ -635,6 +633,11 @@ namespace FoulzExternal
         private void jumpy(object sender, RoutedPropertyChangedEventArgs<double> e) { if (_shutup || JumpPowerSlider == null) return; Options.Settings.Humanoid.JumpPower = (float)JumpPowerSlider.Value; if (JumpPowerValueText != null) JumpPowerValueText.Text = Options.Settings.Humanoid.JumpPower.ToString("0"); }
 
         private void fieldofview(object sender, RoutedPropertyChangedEventArgs<double> e) { if (_shutup || FovSlider == null) return; Options.Settings.Camera.FOV = (float)FovSlider.Value; if (FovValueText != null) FovValueText.Text = Options.Settings.Camera.FOV.ToString("0"); }
+        private void fpscaptgl(object sender, RoutedEventArgs e) { if (_shutup || !(sender is ToggleButton tb)) return; tb.Content = tb.IsChecked == true ? "ON" : "OFF"; Options.Settings.FPS.FPSEnabled = tb.IsChecked == true; }
+        private void gravitytgl(object sender, RoutedEventArgs e) { if (_shutup || !(sender is ToggleButton tb)) return; tb.Content = tb.IsChecked == true ? "ON" : "OFF"; Options.Settings.Gravity.Enabled = tb.IsChecked == true; }
+        private void gravityval(object sender, RoutedPropertyChangedEventArgs<double> e) { if (_shutup || GravitySlider == null) return; Options.Settings.Gravity.Value = (float)GravitySlider.Value; if (GravityValueText != null) GravityValueText.Text = Options.Settings.Gravity.Value.ToString("0.0"); }
+        private void tickratetgl(object sender, RoutedEventArgs e) { if (_shutup || !(sender is ToggleButton tb)) return; tb.Content = tb.IsChecked == true ? "ON" : "OFF"; Options.Settings.Tickrate.Enabled = tb.IsChecked == true; }
+        private void tickrateval(object sender, RoutedPropertyChangedEventArgs<double> e) { if (_shutup || TickrateSlider == null) return; Options.Settings.Tickrate.Value = (float)TickrateSlider.Value; if (TickrateValueText != null) TickrateValueText.Text = Options.Settings.Tickrate.Value.ToString("0"); }
         private void boxespone(object sender, RoutedEventArgs e) { if (sender is ToggleButton tb) tb.Content = "ON"; Options.Settings.Visuals.BoxESP = true; }
         private void boxespoff(object sender, RoutedEventArgs e) { if (sender is ToggleButton tb) tb.Content = "OFF"; Options.Settings.Visuals.BoxESP = false; }
         private void boxfillon(object sender, RoutedEventArgs e) { if (sender is ToggleButton tb) tb.Content = "ON"; Options.Settings.Visuals.FilledBox = true; }
@@ -692,14 +695,13 @@ namespace FoulzExternal
         private void flightkey(object sender, RoutedEventArgs e) { if (_shutup) return; var kb = Options.Settings.Flight.VFlightBind; if (kb == null) return; kb.Waiting = true; var b = FindName("FlightBindButton") as Button; if (b != null) b.Content = "PRESS..."; try { Dispatcher.BeginInvoke(new Action(() => { try { Keyboard.Focus(this); this.Focus(); } catch { } })); } catch { } }
         private void flighttgl(object sender, RoutedEventArgs e) { if (_shutup || !(sender is ToggleButton tb)) return; tb.Content = tb.IsChecked == true ? "ON" : "OFF"; Options.Settings.Flight.VFlight = tb.IsChecked == true; }
         private void flightspeed(object sender, RoutedPropertyChangedEventArgs<double> e) { if (_shutup || FlightSpeedSlider == null) return; Options.Settings.Flight.VFlightSpeed = (float)FlightSpeedSlider.Value; }
+        private void FlightMethod_Changed(object sender, SelectionChangedEventArgs e) { if (_shutup || !(sender is ComboBox cb) || cb.SelectedItem is not ComboBoxItem item) return; if (item.Tag is string tag && int.TryParse(tag, out int method)) Options.Settings.Flight.VFlightMethod = method; }
         private void carflykey(object sender, RoutedEventArgs e) { if (_shutup) return; var kb = Options.Settings.CarFly.CarFlyBind; if (kb == null) return; kb.Waiting = true; var b = FindName("CarFlyBindButton") as Button; if (b != null) b.Content = "PRESS..."; try { Dispatcher.BeginInvoke(new Action(() => { try { Keyboard.Focus(this); this.Focus(); } catch { } })); } catch { } }
         private void carflytgl(object sender, RoutedEventArgs e) { if (_shutup || !(sender is ToggleButton tb)) return; tb.Content = tb.IsChecked == true ? "ON" : "OFF"; Options.Settings.CarFly.CarFlyEnabled = tb.IsChecked == true; }
         private void carflyspeed(object sender, RoutedPropertyChangedEventArgs<double> e) { if (_shutup || CarFlySpeedSlider == null) return; Options.Settings.CarFly.CarFlySpeed = (float)CarFlySpeedSlider.Value; }
         private void noclipkey(object sender, RoutedEventArgs e) { if (_shutup) return; noclip.Bind.Waiting = true; var b = FindName("NoclipBindButton") as Button; if (b != null) b.Content = "PRESS..."; try { Dispatcher.BeginInvoke(new Action(() => { try { Keyboard.Focus(this); this.Focus(); } catch { } })); } catch { } }
         private void nocliptgl(object sender, RoutedEventArgs e) { if (_shutup || !(sender is ToggleButton tb)) return; tb.Content = tb.IsChecked == true ? "ON" : "OFF"; noclip.Enabled = tb.IsChecked == true; }
         private void noclipmode(object sender, RoutedEventArgs e) { if (_shutup || !(sender is ToggleButton tb)) return; noclip.BindMode = tb.IsChecked == true; tb.Content = noclip.BindMode ? "KEYBIND" : "ALWAYS"; }
-
-        private void spotifytgl(object sender, RoutedEventArgs e) { if (_shutup || !(sender is ToggleButton tb)) return; tb.Content = tb.IsChecked == true ? "ON" : "OFF"; if (tb.IsChecked == true) SpotifyOverlay.Launch(); }
 
         private void silentaimbottgl(object sender, RoutedEventArgs e) { if (_shutup || !(sender is ToggleButton tb)) return; tb.Content = tb.IsChecked == true ? "ON" : "OFF"; Options.Settings.Silent.SilentAimbot = tb.IsChecked == true; }
         private void silentalwaysontgl(object sender, RoutedEventArgs e) { if (_shutup || !(sender is ToggleButton tb)) return; tb.Content = tb.IsChecked == true ? "ON" : "OFF"; Options.Settings.Silent.AlwaysOn = tb.IsChecked == true; }

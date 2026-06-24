@@ -38,6 +38,78 @@ namespace FoulzExternal.features.games.universal.explorer
             t.Tick += (s, e) => refresh();
             t.Start();
             tree.SelectedItemChanged += (s, e) => set_props();
+
+            // Placeholder for search box
+            searchBox.Text = "";
+        }
+
+        // Forward mouse wheel events from the TreeView to its parent ScrollViewer
+        private void Tree_PreviewMouseWheel(object sender, MouseWheelEventArgs e)
+        {
+            if (sender is not TreeViewItem && sender is not TreeView) return;
+            treeScroll.ScrollToVerticalOffset(treeScroll.VerticalOffset - e.Delta);
+            e.Handled = true;
+        }
+
+        private void SearchBox_TextChanged(object sender, TextChangedEventArgs e)
+        {
+            ApplySearchFilter();
+        }
+
+        private void ApplySearchFilter()
+        {
+            string filter = searchBox.Text?.Trim().ToLower() ?? "";
+            FilterTreeItems(tree.Items, filter);
+        }
+
+        private void FilterTreeItems(ItemCollection items, string filter)
+        {
+            foreach (var item in items)
+            {
+                if (item is not TreeViewItem tvi) continue;
+                if (tvi.Header is not StackPanel sp) continue;
+
+                // Find the TextBlock in the stack panel
+                string nodeName = "";
+                foreach (var child in sp.Children)
+                {
+                    if (child is TextBlock tb)
+                    {
+                        nodeName = tb.Text?.ToLower() ?? "";
+                        break;
+                    }
+                }
+
+                if (string.IsNullOrEmpty(filter))
+                {
+                    tvi.Visibility = Visibility.Visible;
+                    FilterTreeItems(tvi.Items, filter);
+                }
+                else
+                {
+                    // Check if this node matches, or any descendant matches
+                    bool matches = nodeName.Contains(filter);
+                    // Only recurse into expanded nodes that exist
+                    if (tvi.Items.Count > 0)
+                    {
+                        FilterTreeItems(tvi.Items, filter);
+
+                        // Check if any child is visible
+                        bool childVisible = false;
+                        foreach (var child in tvi.Items)
+                        {
+                            if (child is TreeViewItem c && c.Visibility == Visibility.Visible)
+                            {
+                                childVisible = true;
+                                break;
+                            }
+                        }
+                        if (childVisible) matches = true;
+                    }
+
+                    tvi.Visibility = matches ? Visibility.Visible : Visibility.Collapsed;
+                }
+            }
         }
 
         private void set_props()
@@ -107,6 +179,73 @@ namespace FoulzExternal.features.games.universal.explorer
             {
                 pnl_proximity.Visibility = Visibility.Collapsed;
             }
+
+            // Attributes
+            LoadAttributes(i);
+        }
+
+        private void LoadAttributes(Instance i)
+        {
+            // Clear previous
+            p_attrs_list.Children.Clear();
+
+            try
+            {
+                var attrs = i.GetAllAttributes();
+                if (attrs == null || attrs.Count == 0)
+                {
+                    p_attrs_none.Visibility = Visibility.Visible;
+                    return;
+                }
+
+                p_attrs_none.Visibility = Visibility.Collapsed;
+
+                foreach (var kvp in attrs)
+                {
+                    var border = new Border
+                    {
+                        Background = new SolidColorBrush(Color.FromRgb(0x0D, 0x0D, 0x0D)),
+                        CornerRadius = new CornerRadius(3),
+                        Padding = new Thickness(8, 5, 8, 5),
+                        Margin = new Thickness(0, 0, 0, 4)
+                    };
+
+                    var grid = new Grid();
+                    grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(80) });
+                    grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+
+                    var keyText = new TextBlock
+                    {
+                        Text = kvp.Key,
+                        Foreground = new SolidColorBrush(Color.FromRgb(0x77, 0x77, 0x77)),
+                        FontSize = 9,
+                        VerticalAlignment = VerticalAlignment.Center,
+                        TextWrapping = TextWrapping.NoWrap,
+                        TextTrimming = TextTrimming.CharacterEllipsis
+                    };
+                    Grid.SetColumn(keyText, 0);
+
+                    var valText = new TextBlock
+                    {
+                        Text = kvp.Value,
+                        Foreground = new SolidColorBrush(Color.FromRgb(0xCC, 0xCC, 0xCC)),
+                        FontSize = 9,
+                        VerticalAlignment = VerticalAlignment.Center,
+                        TextWrapping = TextWrapping.NoWrap,
+                        TextTrimming = TextTrimming.CharacterEllipsis
+                    };
+                    Grid.SetColumn(valText, 1);
+
+                    grid.Children.Add(keyText);
+                    grid.Children.Add(valText);
+                    border.Child = grid;
+                    p_attrs_list.Children.Add(border);
+                }
+            }
+            catch
+            {
+                p_attrs_none.Visibility = Visibility.Visible;
+            }
         }
 
         private void clear_props()
@@ -122,6 +261,8 @@ namespace FoulzExternal.features.games.universal.explorer
             pnl_proximity.Visibility = Visibility.Collapsed;
             selected_addr = 0;
             selected_class = "";
+            p_attrs_list.Children.Clear();
+            p_attrs_none.Visibility = Visibility.Visible;
         }
 
         private void BtnTeleport_Click(object sender, RoutedEventArgs e)
@@ -264,6 +405,9 @@ namespace FoulzExternal.features.games.universal.explorer
                     if (node != null) tree.Items.Add(node);
                 }
                 tree_loaded = true;
+
+                // Re-apply search filter after loading
+                ApplySearchFilter();
                 return;
             }
 
@@ -345,7 +489,7 @@ namespace FoulzExternal.features.games.universal.explorer
                 VerticalAlignment = VerticalAlignment.Center,
                 Foreground = isFlagged
                     ? new SolidColorBrush(Color.FromRgb(0xFF, 0x6B, 0x6B))
-                    : (Brush)FindResource("item_grad")
+                    : new SolidColorBrush(Color.FromRgb(0xCC, 0xCC, 0xCC))
             };
 
             stack.Children.Add(img);
@@ -379,19 +523,16 @@ namespace FoulzExternal.features.games.universal.explorer
                     // update text color
                     txt.Foreground = flagged.Contains(addr)
                         ? new SolidColorBrush(Color.FromRgb(0xFF, 0x6B, 0x6B))
-                        : (Brush)FindResource("item_grad");
+                        : new SolidColorBrush(Color.FromRgb(0xCC, 0xCC, 0xCC));
 
                     set_props();
                 };
                 ctx.Items.Add(flagItem);
 
                 // Teleport (for parts)
-                if (TeleportableClasses.Contains(cls))
-                {
-                    var tpItem = new MenuItem { Header = "Teleport", Foreground = Brushes.White };
-                    tpItem.Click += (_, __) => TeleportTo(addr);
-                    ctx.Items.Add(tpItem);
-                }
+                var anyPart = new MenuItem { Header = "Teleport to Position", Foreground = Brushes.White };
+                anyPart.Click += (_, __) => TeleportTo(addr);
+                ctx.Items.Add(anyPart);
 
                 // ProximityPrompt hold duration
                 if (cls == "ProximityPrompt")
@@ -426,6 +567,8 @@ namespace FoulzExternal.features.games.universal.explorer
                                 var childNode = make_node(k);
                                 if (childNode != null) tvi.Items.Add(childNode);
                             }
+                            // Re-apply search filter on new children
+                            ApplySearchFilter();
                         });
                     });
                 }

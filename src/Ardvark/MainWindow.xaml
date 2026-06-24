@@ -5,9 +5,9 @@
         xmlns:explorer="clr-namespace:FoulzExternal.features.games.universal.explorer"
         xmlns:playerlist="clr-namespace:FoulzExternal.features.games.universal.playerlist"
         xmlns:scriptrunner="clr-namespace:FoulzExternal.features.games.universal.scriptrunner"
-        Title="Aardvark" Height="720" Width="850" 
+        Title="Aardvark" Height="800" Width="950" 
         WindowStartupLocation="CenterScreen" 
-        ResizeMode="NoResize" 
+        ResizeMode="CanResizeWithGrip" 
         Background="Transparent" 
         AllowsTransparency="True" 
         WindowStyle="None"
@@ -316,11 +316,12 @@
                         <RadioButton x:Name="SilentTab" Style="{StaticResource tabz_cuh}" Content="SILENT"/>
                         <RadioButton x:Name="VisualsTab" Style="{StaticResource tabz_cuh}" Content="VISUALS"/>
                         <RadioButton x:Name="ChecksTab" Style="{StaticResource tabz_cuh}" Content="CHECKS"/>
-                        <RadioButton x:Name="MiscTab" Style="{StaticResource tabz_cuh}" Content="MISC"/>
+                        <RadioButton x:Name="CharacterTab" Style="{StaticResource tabz_cuh}" Content="CHARACTER"/>
+                        <RadioButton x:Name="MovementTab" Style="{StaticResource tabz_cuh}" Content="MOVEMENT"/>
                         <RadioButton x:Name="ExplorerTab" Style="{StaticResource tabz_cuh}" Content="EXPLORER"/>
                         <RadioButton x:Name="PlayersTab" Style="{StaticResource tabz_cuh}" Content="PLAYERS"/>
-                        <RadioButton x:Name="SettingsTab" Style="{StaticResource tabz_cuh}" Content="SETTINGS"/>
                         <RadioButton x:Name="ScriptsTab" Style="{StaticResource tabz_cuh}" Content="SCRIPTS"/>
+                        <RadioButton x:Name="SettingsTab" Style="{StaticResource tabz_cuh}" Content="SETTINGS"/>
                     </StackPanel>
 
                     <Border Grid.Row="2" Background="#030303" Padding="12" CornerRadius="4,4,6,6">
@@ -722,8 +723,86 @@
                             </Border>
                         </StackPanel>
 
-                        <StackPanel Visibility="{Binding IsChecked, ElementName=MiscTab, Converter={StaticResource BooleanToVisibilityConverter}}">
-                            <TextBlock Text="LOCALPLAYER" Foreground="{DynamicResource AccentBrush}" Opacity="0.55" FontSize="10" FontWeight="Bold" Margin="0,0,0,15"/>
+                        <!-- CHARACTER TAB: character-related settings -->
+                        <StackPanel Visibility="{Binding IsChecked, ElementName=CharacterTab, Converter={StaticResource BooleanToVisibilityConverter}}">
+                            <TextBlock Text="CHARACTER" Foreground="{DynamicResource AccentBrush}" Opacity="0.55" FontSize="10" FontWeight="Bold" Margin="0,0,0,15"/>
+
+                            <Border Background="#0A0A0A" BorderBrush="#111" BorderThickness="1" Padding="12" Margin="0,0,0,10" CornerRadius="4">
+                                <StackPanel>
+                                    <Grid>
+                                        <TextBlock Text="FOV" Foreground="{DynamicResource AccentBrush}" Opacity="0.7" FontSize="10" FontWeight="SemiBold"/>
+                                        <ToggleButton x:Name="FovToggle" HorizontalAlignment="Right" Width="45" Height="22" Style="{StaticResource toggle_vibe}" Checked="oncheck" Unchecked="offcheck" Content="OFF"/>
+                                    </Grid>
+                                    <Grid x:Name="FovConfig" Margin="0,15,0,0">
+                                        <Slider x:Name="FovSlider" Style="{StaticResource slider_chill}" Minimum="70" Maximum="120" Value="90" ValueChanged="fieldofview" Margin="0,0,45,0"/>
+                                        <TextBlock x:Name="FovValueText" Text="90" Foreground="{DynamicResource AccentBrush}" HorizontalAlignment="Right" FontSize="10" FontWeight="Bold"/>
+                                    </Grid>
+                                </StackPanel>
+                            </Border>
+
+                            <Border Background="#0A0A0A" BorderBrush="#111" BorderThickness="1" Padding="12" Margin="0,0,0,10" CornerRadius="4">
+                                <Grid>
+                                    <TextBlock Text="UNCAP FPS" Foreground="{DynamicResource AccentBrush}" Opacity="0.7" FontSize="10" FontWeight="SemiBold"/>
+                                    <ToggleButton x:Name="FpsCapToggle" HorizontalAlignment="Right" Width="45" Height="22" Style="{StaticResource toggle_vibe}" Content="OFF" Click="fpscaptgl"/>
+                                </Grid>
+                            </Border>
+
+                            <Border Background="#0A0A0A" BorderBrush="#111" BorderThickness="1" Padding="12" Margin="0,0,0,10" CornerRadius="4">
+                                <StackPanel>
+                                    <Grid>
+                                        <TextBlock Text="GRAVITY" Foreground="{DynamicResource AccentBrush}" Opacity="0.7" FontSize="10" FontWeight="SemiBold"/>
+                                        <ToggleButton x:Name="GravityToggle" HorizontalAlignment="Right" Width="45" Height="22" Style="{StaticResource toggle_vibe}" Content="OFF" Click="gravitytgl"/>
+                                    </Grid>
+                                    <Grid x:Name="GravityConfig" Margin="0,15,0,0">
+                                        <Slider x:Name="GravitySlider" Style="{StaticResource slider_chill}" Minimum="-500" Maximum="500" Value="196.2" ValueChanged="gravityval" Margin="0,0,45,0"/>
+                                        <TextBlock x:Name="GravityValueText" Text="196.2" Foreground="{DynamicResource AccentBrush}" HorizontalAlignment="Right" FontSize="10" FontWeight="Bold"/>
+                                    </Grid>
+                                </StackPanel>
+                            </Border>
+
+                            <Border Background="#0A0A0A" BorderBrush="#111" BorderThickness="1" Padding="12" Margin="0,0,0,10" CornerRadius="4">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto"/>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+
+                                    <Button x:Name="DesyncBindButton" Grid.Column="0" Width="90" Height="26" Style="{StaticResource small_btn}" Click="desynckey">SET</Button>
+
+                                    <StackPanel Grid.Column="1" Margin="10,0,0,0">
+                                        <TextBlock Text="DESYNC" Foreground="{DynamicResource AccentBrush}" Opacity="0.7" FontSize="10" FontWeight="SemiBold"/>
+                                        <TextBlock Text="Visualizer / Toggle" Foreground="#444" FontSize="9"/>
+                                    </StackPanel>
+
+                                    <ToggleButton x:Name="DesyncVisualizerToggle" Grid.Column="2" HorizontalAlignment="Right" Width="45" Height="22" Style="{StaticResource toggle_vibe}" Content="VIS" Click="desyncvisualizer" Margin="0,0,8,0"/>
+                                    <ToggleButton x:Name="DesyncToggle" Grid.Column="3" HorizontalAlignment="Right" Width="45" Height="22" Style="{StaticResource toggle_vibe}" Content="OFF" Click="desynctgl"/>
+                                </Grid>
+                            </Border>
+
+                            <Border Background="#0A0A0A" BorderBrush="#111" BorderThickness="1" Padding="12" Margin="0,0,0,10" CornerRadius="4">
+                                <StackPanel>
+                                    <Grid>
+                                        <TextBlock Text="NOCLIP" Foreground="{DynamicResource AccentBrush}" Opacity="0.7" FontSize="10" FontWeight="SemiBold"/>
+                                        <ToggleButton x:Name="NoclipToggle" HorizontalAlignment="Right" Width="45" Height="22" Style="{StaticResource toggle_vibe}" Content="OFF" Click="nocliptgl"/>
+                                    </Grid>
+                                    <Grid Margin="0,10,0,0">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                        </Grid.ColumnDefinitions>
+                                        <TextBlock Grid.Column="0" Text="MODE" Foreground="{DynamicResource AccentBrush}" Opacity="0.7" FontSize="10" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                                        <ToggleButton x:Name="NoclipBindModeToggle" Grid.Column="1" Width="70" Height="22" Style="{StaticResource toggle_vibe}" Content="KEYBIND" Click="noclipmode"/>
+                                    </Grid>
+                                    <Button x:Name="NoclipBindButton" Width="90" Height="26" Style="{StaticResource small_btn}" Click="noclipkey" Margin="0,10,0,0">SET</Button>
+                                </StackPanel>
+                            </Border>
+                        </StackPanel>
+
+                        <!-- MOVEMENT TAB: movement-related settings -->
+                        <StackPanel Visibility="{Binding IsChecked, ElementName=MovementTab, Converter={StaticResource BooleanToVisibilityConverter}}">
+                            <TextBlock Text="MOVEMENT" Foreground="{DynamicResource AccentBrush}" Opacity="0.55" FontSize="10" FontWeight="Bold" Margin="0,0,0,15"/>
 
                             <Border Background="#0A0A0A" BorderBrush="#111" BorderThickness="1" Padding="12" Margin="0,0,0,10" CornerRadius="4">
                                 <StackPanel>
@@ -749,40 +828,6 @@
                                         <TextBlock x:Name="JumpPowerValueText" Text="100" Foreground="{DynamicResource AccentBrush}" HorizontalAlignment="Right" FontSize="10" FontWeight="Bold"/>
                                     </Grid>
                                 </StackPanel>
-                            </Border>
-
-                            <Border Background="#0A0A0A" BorderBrush="#111" BorderThickness="1" Padding="12" Margin="0,0,0,10" CornerRadius="4">
-                                <StackPanel>
-                                    <Grid>
-                                        <TextBlock Text="FOV" Foreground="{DynamicResource AccentBrush}" Opacity="0.7" FontSize="10" FontWeight="SemiBold"/>
-                                        <ToggleButton x:Name="FovToggle" HorizontalAlignment="Right" Width="45" Height="22" Style="{StaticResource toggle_vibe}" Checked="oncheck" Unchecked="offcheck" Content="OFF"/>
-                                    </Grid>
-                                    <Grid x:Name="FovConfig" Margin="0,15,0,0">
-                                        <Slider x:Name="FovSlider" Style="{StaticResource slider_chill}" Minimum="70" Maximum="120" Value="90" ValueChanged="fieldofview" Margin="0,0,45,0"/>
-                                        <TextBlock x:Name="FovValueText" Text="90" Foreground="{DynamicResource AccentBrush}" HorizontalAlignment="Right" FontSize="10" FontWeight="Bold"/>
-                                    </Grid>
-                                </StackPanel>
-                            </Border>
-
-                            <Border Background="#0A0A0A" BorderBrush="#111" BorderThickness="1" Padding="12" Margin="0,0,0,10" CornerRadius="4">
-                                <Grid>
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="Auto"/>
-                                        <ColumnDefinition Width="*"/>
-                                        <ColumnDefinition Width="Auto"/>
-                                        <ColumnDefinition Width="Auto"/>
-                                    </Grid.ColumnDefinitions>
-
-                                    <Button x:Name="DesyncBindButton" Grid.Column="0" Width="90" Height="26" Style="{StaticResource small_btn}" Click="desynckey">SET</Button>
-
-                                    <StackPanel Grid.Column="1" Margin="10,0,0,0">
-                                        <TextBlock Text="DESYNC" Foreground="{DynamicResource AccentBrush}" Opacity="0.7" FontSize="10" FontWeight="SemiBold"/>
-                                        <TextBlock Text="Visualizer / Toggle" Foreground="#444" FontSize="9"/>
-                                    </StackPanel>
-
-                                    <ToggleButton x:Name="DesyncVisualizerToggle" Grid.Column="2" HorizontalAlignment="Right" Width="45" Height="22" Style="{StaticResource toggle_vibe}" Content="VIS" Click="desyncvisualizer" Margin="0,0,8,0"/>
-                                    <ToggleButton x:Name="DesyncToggle" Grid.Column="3" HorizontalAlignment="Right" Width="45" Height="22" Style="{StaticResource toggle_vibe}" Content="OFF" Click="desynctgl"/>
-                                </Grid>
                             </Border>
 
                             <Border Background="#0A0A0A" BorderBrush="#111" BorderThickness="1" Padding="12" Margin="0,0,0,10" CornerRadius="4">
@@ -836,6 +881,20 @@
                                                    Margin="8,0,0,0"
                                                    Width="44"
                                                    TextAlignment="Right"/>
+                                    </Grid>
+                                    <Grid Margin="0,10,0,0">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="Auto"/>
+                                            <ColumnDefinition Width="*"/>
+                                        </Grid.ColumnDefinitions>
+                                        <TextBlock Grid.Column="0" Text="METHOD" Foreground="{DynamicResource AccentBrush}" Opacity="0.7"
+                                                   FontSize="10" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                                        <ComboBox Grid.Column="1" x:Name="FlightMethodCombo" Margin="10,0,0,0"
+                                                  Style="{StaticResource combo_chill}"
+                                                  SelectionChanged="FlightMethod_Changed">
+                                            <ComboBoxItem Content="Position (Method 1)" Tag="0" IsSelected="True"/>
+                                            <ComboBoxItem Content="Velocity (Method 2)" Tag="1"/>
+                                        </ComboBox>
                                     </Grid>
                                     <Button x:Name="FlightBindButton" Width="90" Height="26" Style="{StaticResource small_btn}" Click="flightkey">SET</Button>
                                 </StackPanel>
@@ -897,29 +956,18 @@
                                 </StackPanel>
                             </Border>
 
+
                             <Border Background="#0A0A0A" BorderBrush="#111" BorderThickness="1" Padding="12" Margin="0,0,0,10" CornerRadius="4">
                                 <StackPanel>
                                     <Grid>
-                                        <TextBlock Text="NOCLIP" Foreground="{DynamicResource AccentBrush}" Opacity="0.7" FontSize="10" FontWeight="SemiBold"/>
-                                        <ToggleButton x:Name="NoclipToggle" HorizontalAlignment="Right" Width="45" Height="22" Style="{StaticResource toggle_vibe}" Content="OFF" Click="nocliptgl"/>
+                                        <TextBlock Text="TICKRATE" Foreground="{DynamicResource AccentBrush}" Opacity="0.7" FontSize="10" FontWeight="SemiBold"/>
+                                        <ToggleButton x:Name="TickrateToggle" HorizontalAlignment="Right" Width="45" Height="22" Style="{StaticResource toggle_vibe}" Content="OFF" Click="tickratetgl"/>
                                     </Grid>
-                                    <Grid Margin="0,10,0,0">
-                                        <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="*"/>
-                                            <ColumnDefinition Width="Auto"/>
-                                        </Grid.ColumnDefinitions>
-                                        <TextBlock Grid.Column="0" Text="MODE" Foreground="{DynamicResource AccentBrush}" Opacity="0.7" FontSize="10" FontWeight="SemiBold" VerticalAlignment="Center"/>
-                                        <ToggleButton x:Name="NoclipBindModeToggle" Grid.Column="1" Width="70" Height="22" Style="{StaticResource toggle_vibe}" Content="KEYBIND" Click="noclipmode"/>
+                                    <Grid x:Name="TickrateConfig" Margin="0,15,0,0">
+                                        <Slider x:Name="TickrateSlider" Style="{StaticResource slider_chill}" Minimum="1" Maximum="5000" Value="240" ValueChanged="tickrateval" Margin="0,0,45,0"/>
+                                        <TextBlock x:Name="TickrateValueText" Text="240" Foreground="{DynamicResource AccentBrush}" HorizontalAlignment="Right" FontSize="10" FontWeight="Bold"/>
                                     </Grid>
-                                    <Button x:Name="NoclipBindButton" Width="90" Height="26" Style="{StaticResource small_btn}" Click="noclipkey" Margin="0,10,0,0">SET</Button>
                                 </StackPanel>
-                            </Border>
-
-                            <Border Background="#0A0A0A" BorderBrush="#111" BorderThickness="1" Padding="12" Margin="0,0,0,10" CornerRadius="4">
-                                <Grid>
-                                    <TextBlock Text="SPOTIFY OVERLAY" Foreground="{DynamicResource AccentBrush}" Opacity="0.7" FontSize="10" FontWeight="SemiBold" VerticalAlignment="Center"/>
-                                    <ToggleButton x:Name="SpotifyOverlayToggle" HorizontalAlignment="Right" Width="45" Height="22" Style="{StaticResource toggle_vibe}" Content="OFF" Click="spotifytgl"/>
-                                </Grid>
                             </Border>
                         </StackPanel>
 

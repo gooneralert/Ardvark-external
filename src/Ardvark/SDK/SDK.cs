@@ -146,6 +146,89 @@ namespace FoulzExternal.SDK
         public long GetPlaceID() => Mem.Read<long>(Address + Offsets.DataModel.PlaceId);
         public long GetGameID() => Mem.Read<long>(Address + Offsets.DataModel.GameId);
 
+<<<<<<< Updated upstream
+=======
+        /// <summary>
+        /// Finds an attribute by name using the ComponentMap-based attribute system.
+        /// ComponentMap is a struct containing (Start, End) pointers. Each slot between
+        /// Start and End is a 0x10-byte entry pointing to an AttributeListing.
+        /// Each listing contains multiple Attribute entries of size Attribute.Size,
+        /// each with a Key (name pointer) and Value.
+        /// </summary>
+        private long FindAttributeEntry(string attrName)
+        {
+            long component = Mem.ReadPtr(Address + Offsets.Instance.ComponentMap);
+            if (component == 0) return 0;
+
+            long start = Mem.ReadPtr(component);
+            long end = Mem.ReadPtr(component + 8);
+
+            if (start == 0 || end == 0 || end <= start)
+                return 0;
+
+            for (long index = 0; index < end - start; index += 0x10)
+            {
+                long entry = Mem.ReadPtr(start + index);
+                if (entry == 0) continue;
+
+                long listing = Mem.ReadPtr(entry + 0x10);
+                if (listing == 0) continue;
+
+                for (int step = 0; step < (int)Offsets.Attribute.Size * 32; step += (int)Offsets.Attribute.Size)
+                {
+                    long namePtr = Mem.ReadPtr(listing + step + Offsets.Attribute.Key);
+                    if (namePtr == 0) break;
+
+                    string name = FetchString(namePtr);
+                    if (string.IsNullOrEmpty(name) || name.Length > 128)
+                        break;
+
+                    if (name == attrName)
+                        return listing + step;
+                }
+            }
+
+            return 0;
+        }
+
+        public Dictionary<string, string> GetAllAttributes()
+        {
+            var result = new Dictionary<string, string>();
+            long component = Mem.ReadPtr(Address + Offsets.Instance.ComponentMap);
+            if (component == 0) return result;
+
+            long start = Mem.ReadPtr(component);
+            long end = Mem.ReadPtr(component + 8);
+
+            if (start == 0 || end == 0 || end <= start)
+                return result;
+
+            for (long index = 0; index < end - start; index += 0x10)
+            {
+                long entry = Mem.ReadPtr(start + index);
+                if (entry == 0) continue;
+
+                long listing = Mem.ReadPtr(entry + 0x10);
+                if (listing == 0) continue;
+
+                for (int step = 0; step < (int)Offsets.Attribute.Size * 64; step += (int)Offsets.Attribute.Size)
+                {
+                    long namePtr = Mem.ReadPtr(listing + step + Offsets.Attribute.Key);
+                    if (namePtr == 0) break;
+
+                    string name = FetchString(namePtr);
+                    if (string.IsNullOrEmpty(name) || name.Length > 128)
+                        break;
+
+                    string value = FetchString(listing + step + Offsets.Attribute.Value);
+                    result[name] = value;
+                }
+            }
+
+            return result;
+        }
+
+>>>>>>> Stashed changes
         public string GetAttribute(string attrName)
         {
             long attr_container = Mem.ReadPtr(Address + Offsets.Instance.AttributeContainer);

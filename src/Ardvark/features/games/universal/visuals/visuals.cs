@@ -202,7 +202,8 @@ namespace FoulzExternal.games.universal.visuals
                         next.lines.Add(new Line { a = new Point(b.Left - 5, b.Bottom), b = new Point(b.Left - 5, b.Bottom - (b.Height * hp)), c = Colors.Lime, w = 2 });
                     }
 
-                    if (Settings.Visuals.Name) next.texts.Add(new Text { t = p.Name, p = new Point(b.Left + b.Width / 2, b.Top - 15), c = Colors.White, s = Settings.Visuals.NameSize, ctr = true });
+                    if (Settings.Visuals.Name && !string.IsNullOrEmpty(p.Name))
+                        next.texts.Add(new Text { t = p.Name, p = new Point(b.Left + b.Width / 2, b.Top - 15), c = Colors.White, s = Settings.Visuals.NameSize, ctr = true });
                     if (Settings.Visuals.Distance) next.texts.Add(new Text { t = $"{(int)dist}m", p = new Point(b.Left + b.Width / 2, b.Bottom + 2), c = Colors.White, s = Settings.Visuals.DistanceSize, ctr = true });
 
                     // Show weapon name for PF
