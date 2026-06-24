@@ -512,18 +512,9 @@ namespace FoulzExternal.features.games.universal.scriptrunner
 
             try
             {
-                long attrContainer = SDKInst.Mem.ReadPtr(_inst.Address + Offsets.Instance.AttributeContainer);
-                long attrList = attrContainer != 0 ? SDKInst.Mem.ReadPtr(attrContainer + Offsets.Instance.AttributeList) : 0;
-                if (attrList != 0)
+                foreach (var attr in _inst.GetAllAttributes())
                 {
-                    for (int i = 0; i < 0x1000; i += (int)Offsets.Instance.AttributeToNext)
-                    {
-                        long namePtr = SDKInst.Mem.ReadPtr(attrList + i);
-                        string attrName = LuaHelpers.ReadRobloxString(namePtr);
-                        if (string.IsNullOrEmpty(attrName))
-                            break;
-                        values[attrName] = LuaHelpers.ParseAttributeValue(_inst.GetAttribute(attrName));
-                    }
+                    values[attr.Key] = LuaHelpers.ParseAttributeValue(attr.Value);
                 }
             }
             catch { }
