@@ -321,6 +321,7 @@
                         <RadioButton x:Name="ExplorerTab" Style="{StaticResource tabz_cuh}" Content="EXPLORER"/>
                         <RadioButton x:Name="PlayersTab" Style="{StaticResource tabz_cuh}" Content="PLAYERS"/>
                         <RadioButton x:Name="ScriptsTab" Style="{StaticResource tabz_cuh}" Content="SCRIPTS"/>
+                        <RadioButton x:Name="MiscTab" Style="{StaticResource tabz_cuh}" Content="BTOOLS"/>
                         <RadioButton x:Name="SettingsTab" Style="{StaticResource tabz_cuh}" Content="SETTINGS"/>
                     </StackPanel>
 
@@ -1128,6 +1129,35 @@
 
                         <StackPanel Visibility="{Binding IsChecked, ElementName=ScriptsTab, Converter={StaticResource BooleanToVisibilityConverter}}" Margin="0,20,0,0">
                             <scriptrunner:ScriptRunnerControl/>
+                        </StackPanel>
+
+                        <!-- BTOOLS TAB -->
+                        <StackPanel Visibility="{Binding IsChecked, ElementName=MiscTab, Converter={StaticResource BooleanToVisibilityConverter}}">
+                            <TextBlock Text="BTOOLS" Foreground="{DynamicResource AccentBrush}" Opacity="0.55" FontSize="10" FontWeight="Bold" Margin="0,0,0,15"/>
+
+                            <Border Background="#0A0A0A" BorderBrush="#111" BorderThickness="1" Padding="12" Margin="0,0,0,10" CornerRadius="4">
+                                <StackPanel>
+                                    <Grid>
+                                        <TextBlock Text="BTOOLS" Foreground="{DynamicResource AccentBrush}" Opacity="0.7" FontSize="10" FontWeight="SemiBold"/>
+                                        <ToggleButton x:Name="BtoolsToggle" HorizontalAlignment="Right" Width="45" Height="22" Style="{StaticResource toggle_vibe}" Content="OFF" Click="btoolstgl"/>
+                                    </Grid>
+
+                                    <Grid Margin="0,15,0,0">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="Auto"/>
+                                            <ColumnDefinition Width="*"/>
+                                        </Grid.ColumnDefinitions>
+                                        <TextBlock Grid.Column="0" Text="TOOL" Foreground="{DynamicResource AccentBrush}" Opacity="0.7" FontSize="10" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                                        <ComboBox Grid.Column="1" x:Name="BtoolsToolCombo" Margin="10,0,0,0"
+                                                  Style="{StaticResource combo_chill}"
+                                                  SelectionChanged="btoolstool">
+                                            <ComboBoxItem Content="Hammer" IsSelected="True"/>
+                                            <ComboBoxItem Content="Grab"/>
+                                            <ComboBoxItem Content="Clone"/>
+                                        </ComboBox>
+                                    </Grid>
+                                </StackPanel>
+                            </Border>
                         </StackPanel>
 
                     </Grid>

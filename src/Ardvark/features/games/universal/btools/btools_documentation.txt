@@ -1,0 +1,100 @@
+btools.lua — Roblox Building Tools (Hammer / Grab / Clone)
+
+You must allow unsafe LuaU execution before using these functions.
+
+Overview
+────────
+Activates Roblox's built-in building tools (Hammer, Grab, Clone) by
+injecting fake tool objects into the workspace's command pipeline.
+Works by discovering the tool vtables via RTTI scanning, allocating
+memory in the process, and writing the correct vtable pointers.
+
+Offsets
+───────
+WorkspaceCurrentCommand = 0x860
+WorkspaceStickyCommand  = 0x870
+MouseCommandWorkspace   = 0x50
+ToolAllocationSize      = 0xD0
+
+Player.Mouse            = 0x11E0
+PlayerMouse.Workspace   = 0x150
+
+RTTI Names
+──────────
+Hammer:  ".?AVHammerTool@RBX@@", ".?AVHammerTool@@"
+Grab:    ".?AVGrabTool@RBX@@",   ".?AVGrabTool@@"
+Clone:   ".?AVCloneTool@RBX@@",  ".?AVCloneTool@@"
+
+Functions
+─────────
+
+btools.discover()
+─────────────────
+Scans the PE sections of RobloxPlayerBeta.exe for the RTTI type
+descriptors of HammerTool, GrabTool, and CloneTool, then locates
+their vtables. Returns true if at least one vtable was found.
+
+Uses getbase() to get the module base, then reads the PE header
+to enumerate sections. For each readable section, it scans for
+the mangled RTTI name strings, finds the corresponding
+CompleteObjectLocator, and finally locates the vtable pointer.
+
+btools.activate(toolIndex)
+──────────────────────────
+Activates the specified building tool. toolIndex is 0 for Hammer,
+1 for Grab, 2 for Clone.
+
+Steps:
+1. Saves the original workspace current/sticky command pointers
+   (only on first activation).
+2. Allocates ToolAllocationSize (0xD0) bytes in the process.
+3. Zeroes the allocation and writes the tool's vtable at offset 0
+   and the workspace pointer at offset MouseCommandWorkspace (0x50).
+4. Allocates a 0x20-byte control block, zeroes it, then writes
+   0x7FFFFFF0 at offset 0x8 and 1 at offset 0xC.
+5. Writes the tool pointer and control pointer into the workspace's
+   current command (0x860) and sticky command (0x870) slots.
+
+btools.deactivate()
+───────────────────
+Restores the original workspace current/sticky command pointers
+that were saved during the first activation. Resets all internal
+state.
+
+btools.getWorkspace()
+─────────────────────
+Returns the address of the local player's Mouse workspace by
+reading Player.Mouse from the local player instance, then
+PlayerMouse.Workspace from the mouse object.
+
+Usage Example
+─────────────
+-- Discover vtables (run once after attaching)
+btools.discover()
+
+-- Activate the Hammer tool
+btools.activate(0)
+
+-- Activate the Grab tool
+btools.activate(1)
+
+-- Activate the Clone tool
+btools.activate(2)
+
+-- Deactivate and restore original state
+btools.deactivate()
+
+Implementation Notes
+────────────────────
+- All memory reads use memory_read() with the appropriate type
+  (int for 32-bit, uintptr_t for 64-bit pointers).
+- All memory writes use memory_write() with the appropriate type.
+- Memory allocation is done by writing to unused addresses or
+  using the process's own allocator if available.
+- The control block at offset 0x8 stores 0x7FFFFFF0 (a large
+  reference count / sentinel value) and at 0xC stores 1.
+- The tool object's vtable pointer at offset 0 must point to the
+  discovered vtable for the desired tool class.
+- The workspace pointer at offset 0x50 must point to the
+  MouseCommand workspace so the tool knows which workspace it
+  belongs to.

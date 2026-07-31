@@ -6,6 +6,7 @@ using FoulzExternal.features.games.universal.desync;
 using FoulzExternal.features.games.universal.flight;
 using FoulzExternal.features.games.universal.carfly;
 using FoulzExternal.features.games.universal.noclip;
+using FoulzExternal.features.games.universal.btools;
 using FoulzExternal.features.games.universal.fps;
 using FoulzExternal.features.games.universal.gravity;
 using FoulzExternal.features.games.universal.tickrate;
@@ -524,7 +525,7 @@ namespace FoulzExternal
                     _lookin?.Cancel();
                     _lookin = null;
 
-                    try { player.Start(); playerobjects.Start(); HumanoidModule.Start(); TPHandler.Start(); CameraModule.Start(); visuals.Start(); aiming.Start(); desync.Start(); flight.Start(); carfly.Start(); noclip.Start(); fps.Start(); gravity.Start(); tickrate.Start(); silentaiming.Start(); } catch { }
+                    try { player.Start(); playerobjects.Start(); HumanoidModule.Start(); TPHandler.Start(); CameraModule.Start(); visuals.Start(); aiming.Start(); desync.Start(); flight.Start(); carfly.Start(); noclip.Start(); fps.Start(); gravity.Start(); tickrate.Start(); silentaiming.Start(); btools.Start(); } catch { }
 
 
                     Dispatcher.Invoke(() =>
@@ -607,7 +608,7 @@ namespace FoulzExternal
 
         private void startvibing(object sender, RoutedEventArgs e) { ((Storyboard)Resources["FadeInSequence"]).Begin(); settheme(Color.FromRgb(255, 79, 163)); }
 
-        private void bye(object sender, RoutedEventArgs e) { try { HumanoidModule.Stop(); CameraModule.Stop(); visuals.Stop(); TPHandler.Stop(); aiming.Stop(); desync.Stop(); flight.Stop(); fps.Stop(); gravity.Stop(); tickrate.Stop(); silentaiming.Stop(); IMGUI.Program.kill();} catch { } Application.Current.Shutdown(); }
+        private void bye(object sender, RoutedEventArgs e) { try { HumanoidModule.Stop(); CameraModule.Stop(); visuals.Stop(); TPHandler.Stop(); aiming.Stop(); desync.Stop(); flight.Stop(); fps.Stop(); gravity.Stop(); tickrate.Stop(); silentaiming.Stop(); btools.Stop(); IMGUI.Program.kill();} catch { } Application.Current.Shutdown(); }
 
         protected override void OnMouseLeftButtonDown(MouseButtonEventArgs e) { if (e.ChangedButton == MouseButton.Left) DragMove(); }
 
@@ -712,6 +713,19 @@ namespace FoulzExternal
         private void silentpredx(object sender, RoutedPropertyChangedEventArgs<double> e) { if (_shutup || SilentPredictionXSlider == null) return; Options.Settings.Silent.PredictionX = (float)SilentPredictionXSlider.Value; if (SilentPredictionXValueText != null) SilentPredictionXValueText.Text = Options.Settings.Silent.PredictionX.ToString("0"); }
         private void silentpredy(object sender, RoutedPropertyChangedEventArgs<double> e) { if (_shutup || SilentPredictionYSlider == null) return; Options.Settings.Silent.PredictionY = (float)SilentPredictionYSlider.Value; if (SilentPredictionYValueText != null) SilentPredictionYValueText.Text = Options.Settings.Silent.PredictionY.ToString("0"); }
         private void silentkey(object sender, RoutedEventArgs e) { if (_shutup) return; var kb = Options.Settings.Silent.SilentAimbotKey; if (kb == null) return; kb.Waiting = true; if (SilentAimbotKeyButton != null) SilentAimbotKeyButton.Content = "PRESS..."; }
+
+        private void btoolstgl(object sender, RoutedEventArgs e)
+        {
+            if (_shutup || !(sender is ToggleButton tb)) return;
+            tb.Content = tb.IsChecked == true ? "ON" : "OFF";
+            btools.Enabled = tb.IsChecked == true;
+        }
+
+        private void btoolstool(object sender, SelectionChangedEventArgs e)
+        {
+            if (_shutup || BtoolsToolCombo == null) return;
+            btools.SelectedTool = BtoolsToolCombo.SelectedIndex;
+        }
         private void savecfg(object sender, RoutedEventArgs e) { try { string? configName = confignametext?.Text?.Trim(); if (string.IsNullOrEmpty(configName)) configName = "default"; if (ConfigManager.SaveConfig(configName)) { refreshcfglist(); updatedefaulttext(); notify.Notify("Config saved", $"Configuration '{configName}' saved successfully", 2000); } else { notify.Notify("Save failed", $"Failed to save configuration '{configName}'", 2000); } } catch { } }
         private void loadcfg(object sender, RoutedEventArgs e) { try { string? configName = confignametext?.Text?.Trim(); if (string.IsNullOrEmpty(configName)) configName = "default"; if (ConfigManager.LoadConfig(configName)) { _shutup = true; loaddat(sender, e); _shutup = false; notify.Notify("Config loaded", $"Configuration '{configName}' loaded successfully", 2000); } else { notify.Notify("Load failed", $"Failed to load configuration '{configName}'", 2000); } } catch { } }
         private void resetcfg(object sender, RoutedEventArgs e) { try { ConfigManager.ResetToDefaults(); _shutup = true; loaddat(sender, e); _shutup = false; notify.Notify("Reset complete", "All settings reset to default values", 2000); } catch { } }

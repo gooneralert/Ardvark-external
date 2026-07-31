@@ -3,10 +3,10 @@
 /*                  https://offsets.imtheo.lol                  
 /* -------------------------------------------------------------
 /*  Dumped With     : RbxDumperV2                               
-/*  Roblox Version  : version-8884371d30284041
+/*  Roblox Version  : version-145f189a6a974303
 /*  Dumper Version  : 2.1.7
-/*  Dumped At       : 10:20 23/06/2026 (GMT)
-/*  Total Offsets   : 392
+/*  Dumped At       : 00:47 28/07/2026 (GMT)
+/*  Total Offsets   : 393
 /* -------------------------------------------------------------
 /*  Join the discord!                                           
 /*  https://offsets.imtheo.lol/discord                          
@@ -15,7 +15,7 @@
 
 namespace Offsets {
     public static class Info {
-        public static string ClientVersion = "version-8884371d30284041";
+        public static string ClientVersion = "version-145f189a6a974303";
     }
 
     public static class AirProperties {
@@ -24,29 +24,29 @@ namespace Offsets {
     }
 
     public static class AnimationTrack {
-         public const long Animation = 0xd0;
-         public const long Animator = 0x118;
-         public const long IsPlaying = 0xa10;
-         public const long Looped = 0xf5;
-         public const long Speed = 0xe4;
-         public const long TimePosition = 0xe8;
+         public const long Animation = 0xb8;
+         public const long Animator = 0x108;
+         public const long IsPlaying = 0x5ef;
+         public const long Looped = 0xe5;
+         public const long Speed = 0xd4;
+         public const long TimePosition = 0xd8;
     }
 
     public static class Animator {
-         public const long ActiveAnimations = 0x888;
+         public const long ActiveAnimations = 0xb80;
     }
 
     public static class Atmosphere {
-         public const long Color = 0xd0;
-         public const long Decay = 0xdc;
-         public const long Density = 0xe8;
-         public const long Glare = 0xec;
-         public const long Haze = 0xf0;
-         public const long Offset = 0xf4;
+         public const long Color = 0xb8;
+         public const long Decay = 0xc4;
+         public const long Density = 0xd0;
+         public const long Glare = 0xd4;
+         public const long Haze = 0xd8;
+         public const long Offset = 0xdc;
     }
 
     public static class Attachment {
-         public const long Position = 0xdc;
+         public const long Position = 0xc4;
     }
 
     public static class Attribute {
@@ -61,42 +61,42 @@ namespace Offsets {
     }
 
     public static class BasePart {
-         public const long CastShadow = 0xf5;
-         public const long Color3 = 0x194;
-         public const long Locked = 0xf6;
-         public const long Massless = 0xf7;
-         public const long Primitive = 0x148;
-         public const long Reflectance = 0xec;
-         public const long Shape = 0x1b1;
-         public const long Transparency = 0xf0;
+         public const long CastShadow = 0xd5;
+         public const long Color3 = 0x148;
+         public const long Locked = 0xd6;
+         public const long Massless = 0xd7;
+         public const long Primitive = 0x128;
+         public const long Reflectance = 0xcc;
+         public const long Shape = 0x159;
+         public const long Transparency = 0xd0;
     }
 
     public static class Beam {
-         public const long Attachment0 = 0x178;
-         public const long Attachment1 = 0x188;
-         public const long Brightness = 0x198;
-         public const long CurveSize0 = 0x19c;
-         public const long CurveSize1 = 0x1a0;
-         public const long LightEmission = 0x1a4;
-         public const long LightInfluence = 0x1a8;
-         public const long Texture = 0x158;
-         public const long TextureLength = 0x1b4;
-         public const long TextureSpeed = 0x1bc;
-         public const long Width0 = 0x1c0;
-         public const long Width1 = 0x1c4;
-         public const long ZOffset = 0x1c8;
+         public const long Attachment0 = 0x160;
+         public const long Attachment1 = 0x170;
+         public const long Brightness = 0x180;
+         public const long CurveSize0 = 0x184;
+         public const long CurveSize1 = 0x188;
+         public const long LightEmission = 0x18c;
+         public const long LightInfluence = 0x190;
+         public const long Texture = 0x140;
+         public const long TextureLength = 0x19c;
+         public const long TextureSpeed = 0x1a4;
+         public const long Width0 = 0x1a8;
+         public const long Width1 = 0x1ac;
+         public const long ZOffset = 0x1b0;
     }
 
     public static class BloomEffect {
-         public const long Enabled = 0xc8;
-         public const long Intensity = 0xd0;
-         public const long Size = 0xd4;
-         public const long Threshold = 0xd8;
+         public const long Enabled = 0xb0;
+         public const long Intensity = 0xb8;
+         public const long Size = 0xbc;
+         public const long Threshold = 0xc0;
     }
 
     public static class BlurEffect {
-         public const long Enabled = 0xc8;
-         public const long Size = 0xd0;
+         public const long Enabled = 0xb0;
+         public const long Size = 0xb8;
     }
 
     public static class ByteCode {
@@ -105,92 +105,92 @@ namespace Offsets {
     }
 
     public static class Camera {
-         public const long CameraSubject = 0xe8;
-         public const long CameraType = 0x158;
-         public const long FieldOfView = 0x160;
-         public const long ImagePlaneDepth = 0x2f0;
-         public const long Position = 0x11c;
-         public const long Rotation = 0xf8;
-         public const long Viewport = 0x2ac;
-         public const long ViewportSize = 0x2e8;
+         public const long CameraSubject = 0xc8;
+         public const long CameraType = 0x138;
+         public const long FieldOfView = 0x140;
+         public const long ImagePlaneDepth = 0x2d0;
+         public const long Position = 0xfc;
+         public const long Rotation = 0xd8;
+         public const long Viewport = 0x28c;
+         public const long ViewportSize = 0x2c8;
     }
 
     public static class CharacterMesh {
-         public const long BaseTextureId = 0xe0;
-         public const long BodyPart = 0x160;
-         public const long MeshId = 0x110;
-         public const long OverlayTextureId = 0x140;
+         public const long BaseTextureId = 0xc8;
+         public const long BodyPart = 0x148;
+         public const long MeshId = 0xf8;
+         public const long OverlayTextureId = 0x128;
     }
 
     public static class ClickDetector {
-         public const long MaxActivationDistance = 0x100;
-         public const long MouseIcon = 0xe0;
+         public const long MaxActivationDistance = 0xe8;
+         public const long MouseIcon = 0xc8;
     }
 
     public static class Clothing {
-         public const long Color3 = 0x138;
-         public const long Template = 0x118;
+         public const long Color3 = 0x120;
+         public const long Template = 0x100;
     }
 
     public static class ColorCorrectionEffect {
-         public const long Brightness = 0xdc;
-         public const long Contrast = 0xe0;
-         public const long Enabled = 0xc8;
-         public const long TintColor = 0xd0;
+         public const long Brightness = 0xc4;
+         public const long Contrast = 0xc8;
+         public const long Enabled = 0xb0;
+         public const long TintColor = 0xb8;
     }
 
     public static class ColorGradingEffect {
-         public const long Enabled = 0xc8;
-         public const long TonemapperPreset = 0xd0;
+         public const long Enabled = 0xb0;
+         public const long TonemapperPreset = 0xb8;
     }
 
     public static class DataModel {
-         public const long CreatorId = 0x198;
-         public const long GameId = 0x1a0;
-         public const long GameLoaded = 0x678;
-         public const long JobId = 0x138;
-         public const long PlaceId = 0x1a8;
-         public const long PlaceVersion = 0x1c4;
-         public const long PrimitiveCount = 0x4a8;
+         public const long CreatorId = 0x180;
+         public const long GameId = 0x188;
+         public const long GameLoaded = 0x578;
+         public const long JobId = 0x120;
+         public const long PlaceId = 0x190;
+         public const long PlaceVersion = 0x1ac;
+         public const long PrimitiveCount = 0x3c0;
          public const long ScriptContext = 0x440;
-         public const long ServerIP = 0x660;
-         public const long ToRenderView1 = 0x1e0;
+         public const long ServerIP = 0x560;
+         public const long ToRenderView1 = 0x1c8;
          public const long ToRenderView2 = 0x8;
          public const long ToRenderView3 = 0x28;
-         public const long Workspace = 0x178;
+         public const long Workspace = 0x160;
     }
 
     public static class DepthOfFieldEffect {
-         public const long Enabled = 0xc8;
-         public const long FarIntensity = 0xd0;
-         public const long FocusDistance = 0xd4;
-         public const long InFocusRadius = 0xd8;
-         public const long NearIntensity = 0xdc;
+         public const long Enabled = 0xb0;
+         public const long FarIntensity = 0xb8;
+         public const long FocusDistance = 0xbc;
+         public const long InFocusRadius = 0xc0;
+         public const long NearIntensity = 0xc4;
     }
 
     public static class DragDetector {
-         public const long ActivatedCursorIcon = 0x1d8;
-         public const long CursorIcon = 0xe0;
-         public const long MaxActivationDistance = 0x100;
-         public const long MaxDragAngle = 0x2c0;
-         public const long MaxDragTranslation = 0x284;
-         public const long MaxForce = 0x2c4;
-         public const long MaxTorque = 0x2c8;
-         public const long MinDragAngle = 0x2cc;
-         public const long MinDragTranslation = 0x290;
-         public const long ReferenceInstance = 0x208;
-         public const long Responsiveness = 0x2d8;
+         public const long ActivatedCursorIcon = 0x1c0;
+         public const long CursorIcon = 0xc8;
+         public const long MaxActivationDistance = 0xe8;
+         public const long MaxDragAngle = 0x2a8;
+         public const long MaxDragTranslation = 0x26c;
+         public const long MaxForce = 0x2ac;
+         public const long MaxTorque = 0x2b0;
+         public const long MinDragAngle = 0x2b4;
+         public const long MinDragTranslation = 0x278;
+         public const long ReferenceInstance = 0x1f0;
+         public const long Responsiveness = 0x2c0;
     }
 
     public static class FakeDataModel {
-         public const long Pointer = 0x7bcf6a8;
-         public const long RealDataModel = 0x1d8;
+         public const long Pointer = 0x7e26978;
+         public const long RealDataModel = 0x1d0;
     }
 
     public static class GuiBase2D {
-         public const long AbsolutePosition = 0x110;
-         public const long AbsoluteRotation = 0x188;
-         public const long AbsoluteSize = 0x118;
+         public const long AbsolutePosition = 0xf8;
+         public const long AbsoluteRotation = 0x178;
+         public const long AbsoluteSize = 0x100;
     }
 
     public static class GuiObject {
@@ -200,97 +200,97 @@ namespace Offsets {
          public const long Image = 0x988;
          public const long LayoutOrder = 0x580;
          public const long Position = 0x510;
-         public const long RichText = 0xb50;
-         public const long Rotation = 0x188;
+         public const long RichText = 0xb78;
+         public const long Rotation = 0x178;
          public const long ScreenGui_Enabled = 0x4c4;
          public const long Size = 0x530;
-         public const long Text = 0xda0;
-         public const long TextColor3 = 0xe50;
+         public const long Text = 0xde8;
+         public const long TextColor3 = 0xe98;
          public const long Visible = 0x5ad;
-         public const long ZIndex = 0x19b;
+         public const long ZIndex = 0x18b;
     }
 
     public static class Humanoid {
-         public const long AutoJumpEnabled = 0x1e0;
-         public const long AutoRotate = 0x1e1;
-         public const long AutomaticScalingEnabled = 0x1e2;
-         public const long BreakJointsOnDeath = 0x1e3;
-         public const long CameraOffset = 0x140;
-         public const long DisplayDistanceType = 0x18c;
-         public const long DisplayName = 0xd0;
-         public const long EvaluateStateMachine = 0x1e4;
-         public const long FloorMaterial = 0x190;
-         public const long Health = 0x194;
-         public const long HealthDisplayDistance = 0x198;
-         public const long HealthDisplayType = 0x19c;
-         public const long HipHeight = 0x1a0;
-         public const long HumanoidRootPart = 0x480;
-         public const long HumanoidState = 0x8a0;
+         public const long AutoJumpEnabled = 0x1d4;
+         public const long AutoRotate = 0x1d5;
+         public const long AutomaticScalingEnabled = 0x1d6;
+         public const long BreakJointsOnDeath = 0x1d7;
+         public const long CameraOffset = 0x128;
+         public const long DisplayDistanceType = 0x180;
+         public const long DisplayName = 0xb8;
+         public const long EvaluateStateMachine = 0x1d8;
+         public const long FloorMaterial = 0x184;
+         public const long Health = 0x190;
+         public const long HealthDisplayDistance = 0x188;
+         public const long HealthDisplayType = 0x18c;
+         public const long HipHeight = 0x194;
+         public const long HumanoidRootPart = 0x478;
+         public const long HumanoidState = 0x898;
          public const long HumanoidStateID = 0x20;
-         public const long IsWalking = 0x91f;
-         public const long Jump = 0x1e6;
-         public const long JumpHeight = 0x1ac;
-         public const long JumpPower = 0x1b0;
-         public const long MaxHealth = 0x1b4;
-         public const long MaxSlopeAngle = 0x1b8;
-         public const long MoveDirection = 0x158;
-         public const long MoveToPart = 0x130;
-         public const long MoveToPoint = 0x17c;
-         public const long NameDisplayDistance = 0x1bc;
-         public const long NameOcclusion = 0x1c0;
-         public const long PlatformStand = 0x1e8;
-         public const long RequiresNeck = 0x1e9;
-         public const long RigType = 0x1cc;
-         public const long SeatPart = 0x120;
-         public const long Sit = 0x1e9;
-         public const long TargetPoint = 0x164;
-         public const long UseJumpPower = 0x1ec;
-         public const long WalkTimer = 0x410;
-         public const long Walkspeed = 0x1dc;
-         public const long WalkspeedCheck = 0x3c4;
+         public const long IsWalking = 0x93f;
+         public const long Jump = 0x1da;
+         public const long JumpHeight = 0x1a0;
+         public const long JumpPower = 0x1a4;
+         public const long MaxHealth = 0x1a8;
+         public const long MaxSlopeAngle = 0x1ac;
+         public const long MoveDirection = 0x140;
+         public const long MoveToPart = 0x118;
+         public const long MoveToPoint = 0x164;
+         public const long NameDisplayDistance = 0x1b0;
+         public const long NameOcclusion = 0x1b4;
+         public const long PlatformStand = 0x1dc;
+         public const long RequiresNeck = 0x1dd;
+         public const long RigType = 0x1c0;
+         public const long SeatPart = 0x108;
+         public const long Sit = 0x1dd;
+         public const long TargetPoint = 0x14c;
+         public const long UseJumpPower = 0x1e0;
+         public const long WalkTimer = 0x408;
+         public const long Walkspeed = 0x1d0;
+         public const long WalkspeedCheck = 0x3bc;
     }
 
     public static class Instance {
          public const long ChildrenEnd = 0x8;
-         public const long ChildrenStart = 0x78;
-         public const long ClassBase = 0x230;
+         public const long ChildrenStart = 0x70;
+         public const long ClassBase = 0x1b0;
          public const long ClassDescriptor = 0x18;
          public const long ClassName = 0x8;
          public const long ComponentMap = 0x38;
-         public const long Name = 0xb0;
-         public const long Parent = 0x70;
+         public const long Name = 0x98;
+         public const long Parent = 0x68;
          public const long This = 0x8;
     }
 
     public static class Lighting {
-         public const long Ambient = 0xe0;
-         public const long Brightness = 0x128;
-         public const long ClockTime = 0x1c0;
-         public const long ColorShift_Bottom = 0xf8;
-         public const long ColorShift_Top = 0xec;
-         public const long EnvironmentDiffuseScale = 0x12c;
-         public const long EnvironmentSpecularScale = 0x130;
-         public const long ExposureCompensation = 0x134;
-         public const long FogColor = 0x104;
-         public const long FogEnd = 0x13c;
-         public const long FogStart = 0x140;
-         public const long GeographicLatitude = 0x198;
-         public const long GlobalShadows = 0x150;
-         public const long GradientBottom = 0x19c;
-         public const long GradientTop = 0x158;
-         public const long LightColor = 0x164;
-         public const long LightDirection = 0x170;
-         public const long MoonPosition = 0x18c;
-         public const long OutdoorAmbient = 0x110;
-         public const long Sky = 0x1e0;
-         public const long Source = 0x17c;
-         public const long SunPosition = 0x180;
+         public const long Ambient = 0xd0;
+         public const long Brightness = 0x118;
+         public const long ClockTime = 0xc8;
+         public const long ColorShift_Bottom = 0xe8;
+         public const long ColorShift_Top = 0xdc;
+         public const long EnvironmentDiffuseScale = 0x11c;
+         public const long EnvironmentSpecularScale = 0x120;
+         public const long ExposureCompensation = 0x124;
+         public const long FogColor = 0xf4;
+         public const long FogEnd = 0x12c;
+         public const long FogStart = 0x130;
+         public const long GeographicLatitude = 0x134;
+         public const long GlobalShadows = 0x144;
+         public const long GradientBottom = 0x188;
+         public const long GradientTop = 0x148;
+         public const long LightColor = 0x154;
+         public const long LightDirection = 0x160;
+         public const long MoonPosition = 0x17c;
+         public const long OutdoorAmbient = 0x100;
+         public const long Sky = 0x1c0;
+         public const long Source = 0x16c;
+         public const long SunPosition = 0x170;
     }
 
     public static class LocalScript {
-         public const long ByteCode = 0x1a8;
-         public const long GUID = 0xe8;
-         public const long Hash = 0x1b8;
+         public const long ByteCode = 0x190;
+         public const long GUID = 0xd0;
+         public const long Hash = 0x1a0;
     }
 
     public static class MaterialColors {
@@ -333,69 +333,69 @@ namespace Offsets {
     }
 
     public static class MeshPart {
-         public const long MeshId = 0x2f8;
-         public const long Texture = 0x328;
+         public const long MeshId = 0x2a8;
+         public const long Texture = 0x2d8;
     }
 
     public static class Misc {
-         public const long Adornee = 0x108;
-         public const long AnimationId = 0xd8;
+         public const long Adornee = 0xf0;
+         public const long AnimationId = 0xc0;
          public const long StringLength = 0x10;
-         public const long Value = 0xd0;
+         public const long Value = 0xb8;
     }
 
     public static class Model {
-         public const long PrimaryPart = 0x278;
-         public const long Scale = 0x164;
+         public const long PrimaryPart = 0x258;
+         public const long Scale = 0x144;
     }
 
     public static class ModuleScript {
-         public const long ByteCode = 0x150;
-         public const long GUID = 0xe8;
-         public const long Hash = 0x160;
+         public const long ByteCode = 0x138;
+         public const long GUID = 0xd0;
+         public const long Hash = 0x148;
          public const long IsCoreScript = 0x0;
     }
 
     public static class MouseService {
-         public const long InputObject = 0x108;
-         public const long InputObject2 = 0x118;
-         public const long MousePosition = 0xec;
-         public const long SensitivityPointer = 0x7d92898;
+         public const long InputObject = 0xf0;
+         public const long InputObject2 = 0x100;
+         public const long MousePosition = 0xd4;
+         public const long SensitivityPointer = 0x7fd51b8;
     }
 
     public static class ParticleEmitter {
-         public const long Acceleration = 0x1f8;
-         public const long Brightness = 0x234;
-         public const long Drag = 0x238;
-         public const long Lifetime = 0x20c;
-         public const long LightEmission = 0x250;
-         public const long LightInfluence = 0x254;
-         public const long Rate = 0x260;
-         public const long RotSpeed = 0x214;
-         public const long Rotation = 0x21c;
-         public const long Speed = 0x224;
-         public const long SpreadAngle = 0x22c;
-         public const long Texture = 0x1d8;
-         public const long TimeScale = 0x274;
-         public const long VelocityInheritance = 0x278;
-         public const long ZOffset = 0x27c;
+         public const long Acceleration = 0x1e0;
+         public const long Brightness = 0x21c;
+         public const long Drag = 0x220;
+         public const long Lifetime = 0x1f4;
+         public const long LightEmission = 0x238;
+         public const long LightInfluence = 0x23c;
+         public const long Rate = 0x248;
+         public const long RotSpeed = 0x1fc;
+         public const long Rotation = 0x204;
+         public const long Speed = 0x20c;
+         public const long SpreadAngle = 0x214;
+         public const long Texture = 0x1c0;
+         public const long TimeScale = 0x25c;
+         public const long VelocityInheritance = 0x260;
+         public const long ZOffset = 0x264;
     }
 
     public static class Player {
-         public const long AccountAge = 0x34c;
-         public const long CameraMode = 0x35c;
-         public const long DisplayName = 0x150;
-         public const long HealthDisplayDistance = 0x37c;
-         public const long LocalPlayer = 0x148;
-         public const long LocaleId = 0x130;
-         public const long MaxZoomDistance = 0x354;
-         public const long MinZoomDistance = 0x358;
-         public const long ModelInstance = 0x3d0;
-         public const long Mouse = 0x1188;
-         public const long NameDisplayDistance = 0x38c;
-         public const long Team = 0x2d0;
-         public const long TeamColor = 0x398;
-         public const long UserId = 0x2f8;
+         public const long AccountAge = 0x35c;
+         public const long CameraMode = 0x370;
+         public const long DisplayName = 0x138;
+         public const long HealthDisplayDistance = 0x390;
+         public const long LocalPlayer = 0x130;
+         public const long LocaleId = 0x118;
+         public const long MaxZoomDistance = 0x368;
+         public const long MinZoomDistance = 0x36c;
+         public const long ModelInstance = 0x298;
+         public const long Mouse = 0x11e0;
+         public const long NameDisplayDistance = 0x3a0;
+         public const long Team = 0x2d8;
+         public const long TeamColor = 0x3ac;
+         public const long UserId = 0xd0;
     }
 
     public static class PlayerConfigurer {
@@ -403,8 +403,8 @@ namespace Offsets {
     }
 
     public static class PlayerMouse {
-         public const long Icon = 0xe0;
-         public const long Workspace = 0x168;
+         public const long Icon = 0xc8;
+         public const long Workspace = 0x150;
     }
 
     public static class Primitive {
@@ -427,14 +427,14 @@ namespace Offsets {
     }
 
     public static class ProximityPrompt {
-         public const long ActionText = 0xc8;
-         public const long Enabled = 0x14e;
-         public const long GamepadKeyCode = 0x134;
-         public const long HoldDuration = 0x138;
-         public const long KeyCode = 0x13c;
-         public const long MaxActivationDistance = 0x140;
-         public const long ObjectText = 0xe8;
-         public const long RequiresLineOfSight = 0x14f;
+         public const long ActionText = 0xb0;
+         public const long Enabled = 0x136;
+         public const long GamepadKeyCode = 0x11c;
+         public const long HoldDuration = 0x120;
+         public const long KeyCode = 0x124;
+         public const long MaxActivationDistance = 0x128;
+         public const long ObjectText = 0xd0;
+         public const long RequiresLineOfSight = 0x137;
     }
 
     public static class RenderJob {
@@ -451,14 +451,14 @@ namespace Offsets {
     }
 
     public static class RunService {
-         public const long HeartbeatFPS = 0xb8;
-         public const long HeartbeatTask = 0xf8;
+         public const long HeartbeatFPS = 0xf4;
+         public const long HeartbeatTask = 0x3b8;
     }
 
     public static class Script {
-         public const long ByteCode = 0x1a8;
-         public const long GUID = 0xe8;
-         public const long Hash = 0x1b8;
+         public const long ByteCode = 0x190;
+         public const long GUID = 0xd0;
+         public const long Hash = 0x1a0;
     }
 
     public static class ScriptContext {
@@ -466,45 +466,46 @@ namespace Offsets {
     }
 
     public static class Seat {
-         public const long Occupant = 0x218;
+         public const long Occupant = 0x1b0;
     }
 
     public static class Sky {
-         public const long MoonAngularSize = 0x25c;
-         public const long MoonTextureId = 0xe0;
-         public const long SkyboxBk = 0x110;
-         public const long SkyboxDn = 0x140;
-         public const long SkyboxFt = 0x170;
-         public const long SkyboxLf = 0x1a0;
-         public const long SkyboxOrientation = 0x250;
-         public const long SkyboxRt = 0x1d0;
-         public const long SkyboxUp = 0x200;
-         public const long StarCount = 0x260;
-         public const long SunAngularSize = 0x254;
-         public const long SunTextureId = 0x230;
+         public const long MoonAngularSize = 0x244;
+         public const long MoonTextureId = 0xc8;
+         public const long SkyboxBk = 0xf8;
+         public const long SkyboxDn = 0x128;
+         public const long SkyboxFt = 0x158;
+         public const long SkyboxLf = 0x188;
+         public const long SkyboxOrientation = 0x238;
+         public const long SkyboxRt = 0x1b8;
+         public const long SkyboxUp = 0x1e8;
+         public const long StarCount = 0x248;
+         public const long SunAngularSize = 0x23c;
+         public const long SunTextureId = 0x218;
     }
 
     public static class Sound {
-         public const long Looped = 0x155;
-         public const long PlaybackSpeed = 0x134;
-         public const long RollOffMaxDistance = 0x138;
-         public const long RollOffMinDistance = 0x13c;
-         public const long SoundGroup = 0x100;
-         public const long SoundId = 0xe0;
-         public const long Volume = 0x148;
+         public const long IsPlaying = 0x140;
+         public const long Looped = 0x13d;
+         public const long PlaybackSpeed = 0x11c;
+         public const long RollOffMaxDistance = 0x120;
+         public const long RollOffMinDistance = 0x124;
+         public const long SoundGroup = 0xe8;
+         public const long SoundId = 0xc8;
+         public const long Volume = 0x130;
     }
 
     public static class SpawnLocation {
          public const long AllowTeamChangeOnTouch = 0x3d;
-         public const long Enabled = 0x1f1;
-         public const long ForcefieldDuration = 0x1e8;
-         public const long Neutral = 0x1f2;
-         public const long TeamColor = 0x1ec;
+         public const long Enabled = 0x189;
+         public const long ForcefieldDuration = 0x180;
+         public const long Neutral = 0xad;
+         public const long TeamColor = 0x184;
     }
 
     public static class SpecialMesh {
-         public const long MeshId = 0x110;
-         public const long Scale = 0xdc;
+         public const long MeshId = 0xf8;
+         public const long Scale = 0xc4;
     }
 
     public static class StatsItem {
@@ -512,21 +513,21 @@ namespace Offsets {
     }
 
     public static class SunRaysEffect {
-         public const long Enabled = 0xc8;
-         public const long Intensity = 0xd0;
-         public const long Spread = 0xd4;
+         public const long Enabled = 0xb0;
+         public const long Intensity = 0xb8;
+         public const long Spread = 0xbc;
     }
 
     public static class SurfaceAppearance {
-         public const long AlphaMode = 0x2a0;
-         public const long Color = 0x288;
-         public const long ColorMap = 0xe0;
-         public const long EmissiveMaskContent = 0x110;
-         public const long EmissiveStrength = 0x2a4;
-         public const long EmissiveTint = 0x294;
-         public const long MetalnessMap = 0x140;
-         public const long NormalMap = 0x170;
-         public const long RoughnessMap = 0x1a0;
+         public const long AlphaMode = 0x290;
+         public const long Color = 0x278;
+         public const long ColorMap = 0xc8;
+         public const long EmissiveMaskContent = 0xf8;
+         public const long EmissiveStrength = 0x294;
+         public const long EmissiveTint = 0x284;
+         public const long MetalnessMap = 0x128;
+         public const long NormalMap = 0x158;
+         public const long RoughnessMap = 0x188;
     }
 
     public static class TaskScheduler {
@@ -534,70 +535,70 @@ namespace Offsets {
          public const long JobName = 0x18;
          public const long JobStart = 0xc8;
          public const long MaxFPS = 0xb0;
-         public const long Pointer = 0x815c668;
+         public const long Pointer = 0x84a58e0;
     }
 
     public static class Team {
-         public const long BrickColor = 0xd0;
+         public const long BrickColor = 0xb8;
     }
 
     public static class Terrain {
-         public const long GrassLength = 0x1f0;
-         public const long MaterialColors = 0x4a0;
-         public const long WaterColor = 0x1e0;
-         public const long WaterReflectance = 0x1f8;
-         public const long WaterTransparency = 0x1fc;
-         public const long WaterWaveSize = 0x200;
-         public const long WaterWaveSpeed = 0x204;
+         public const long GrassLength = 0x188;
+         public const long MaterialColors = 0x430;
+         public const long WaterColor = 0x178;
+         public const long WaterReflectance = 0x190;
+         public const long WaterTransparency = 0x194;
+         public const long WaterWaveSize = 0x198;
+         public const long WaterWaveSpeed = 0x19c;
     }
 
     public static class Textures {
-         public const long Decal_Texture = 0x198;
-         public const long Texture_Texture = 0x198;
+         public const long Decal_Texture = 0x180;
+         public const long Texture_Texture = 0x180;
     }
 
     public static class Tool {
-         public const long CanBeDropped = 0x1f5;
-         public const long Enabled = 0x4c1;
-         public const long Grip = 0x4b4;
-         public const long ManualActivationOnly = 0x4c2;
-         public const long RequiresHandle = 0x4c3;
-         public const long TextureId = 0x368;
-         public const long Tooltip = 0x470;
+         public const long CanBeDropped = 0x4b8;
+         public const long Enabled = 0x165;
+         public const long Grip = 0x4ac;
+         public const long ManualActivationOnly = 0x4ba;
+         public const long RequiresHandle = 0x4bb;
+         public const long TextureId = 0x360;
+         public const long Tooltip = 0x468;
     }
 
     public static class UnionOperation {
-         public const long AssetId = 0x2f0;
+         public const long AssetId = 0x2a8;
     }
 
     public static class UserInputService {
-         public const long WindowInputState = 0x2d8;
+         public const long WindowInputState = 0x2c0;
     }
 
     public static class VehicleSeat {
-         public const long MaxSpeed = 0x230;
-         public const long SteerFloat = 0x238;
-         public const long ThrottleFloat = 0x240;
-         public const long Torque = 0x244;
-         public const long TurnSpeed = 0x248;
+         public const long MaxSpeed = 0x1c8;
+         public const long SteerFloat = 0x1d0;
+         public const long ThrottleFloat = 0x1d8;
+         public const long Torque = 0x1dc;
+         public const long TurnSpeed = 0x1e0;
     }
 
     public static class VisualEngine {
-         public const long Dimensions = 0xab0;
-         public const long FakeDataModel = 0xa90;
-         public const long Pointer = 0x82ea3f8;
-         public const long RenderView = 0xbb8;
-         public const long ViewMatrix = 0x150;
+         public const long Dimensions = 0xae0;
+         public const long FakeDataModel = 0xac0;
+         public const long Pointer = 0x8818f60;
+         public const long RenderView = 0xbf0;
+         public const long ViewMatrix = 0x180;
     }
 
     public static class Weld {
-         public const long Part0 = 0x130;
-         public const long Part1 = 0x140;
+         public const long Part0 = 0x118;
+         public const long Part1 = 0x128;
     }
 
     public static class WeldConstraint {
-         public const long Part0 = 0xd0;
-         public const long Part1 = 0xe0;
+         public const long Part0 = 0xb8;
+         public const long Part1 = 0xc8;
     }
 
     public static class WindowInputState {
@@ -606,10 +607,10 @@ namespace Offsets {
     }
 
     public static class Workspace {
-         public const long CurrentCamera = 0x4a8;
-         public const long DistributedGameTime = 0x4c8;
-         public const long ReadOnlyGravity = 0x9e8;
-         public const long World = 0x400;
+         public const long CurrentCamera = 0x498;
+         public const long DistributedGameTime = 0x4b8;
+         public const long ReadOnlyGravity = 0x9b0;
+         public const long World = 0x3f0;
     }
 
     public static class World {
@@ -617,7 +618,7 @@ namespace Offsets {
          public const long FallenPartsDestroyHeight = 0x208;
          public const long Gravity = 0x210;
          public const long Primitives = 0x288;
-         public const long worldStepsPerSec = 0x680;
+         public const long worldStepsPerSec = 0x700;
     }
 
 }

@@ -24,6 +24,9 @@ namespace FoulzExternal
         [DllImport("kernel32.dll")]
         private static extern IntPtr VirtualAlloc(IntPtr a, UIntPtr s, uint t, uint p);
 
+        [DllImport("kernel32.dll", SetLastError = true)]
+        private static extern IntPtr VirtualAllocEx(IntPtr hProcess, IntPtr lpAddress, UIntPtr dwSize, uint flAllocationType, uint flProtect);
+
         [DllImport("kernel32.dll", CharSet = CharSet.Auto)]
         private static extern IntPtr GetModuleHandle(string n);
 
@@ -112,6 +115,37 @@ namespace FoulzExternal
         {
             var buffer = Read<buffer.Buffer>(address);
             return Encoding.UTF8.GetString(buffer.data).Split('\0')[0];
+        }
+
+        public bool ReadRaw(long address, byte[] buffer, int size)
+        {
+            if (buffer == null || buffer.Length < size) return false;
+            try
+            {
+                _r(Handle, (IntPtr)address, buffer, (uint)size, out _);
+                return true;
+            }
+            catch { return false; }
+        }
+
+        public bool WriteRaw(long address, byte[] buffer, int size)
+        {
+            if (buffer == null) return false;
+            try
+            {
+                _w(Handle, (IntPtr)address, buffer, (uint)size, out _);
+                return true;
+            }
+            catch { return false; }
+        }
+
+        public long Allocate(int size)
+        {
+            try
+            {
+                return VirtualAllocEx(Handle, IntPtr.Zero, (UIntPtr)size, 0x3000, 0x40).ToInt64();
+            }
+            catch { return 0; }
         }
     }
 }

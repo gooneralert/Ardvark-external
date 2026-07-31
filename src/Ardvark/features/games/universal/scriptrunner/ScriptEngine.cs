@@ -12,6 +12,7 @@ using FoulzExternal.storage;
 using FoulzExternal.SDK.structures;
 using FoulzExternal.SDK.worldtoscreen;
 using SDKInst = FoulzExternal.SDK.Instance;
+using BtoolsMod = FoulzExternal.features.games.universal.btools.btools;
 
 namespace FoulzExternal.features.games.universal.scriptrunner
 {
@@ -390,6 +391,13 @@ namespace FoulzExternal.features.games.universal.scriptrunner
             lua["memory_read"]  = new Func<string, long, object?>(MemRead);
             lua["memory_write"] = new Action<string, long, object?>(MemWrite);
             lua["getbase"]      = new Func<long>(() => SDKInst.Mem?.Base ?? 0);
+
+            // ── BTOOLS ───────────────────────────────────────────────────────
+            lua["btools_enable"]    = new Action(() => BtoolsMod.Enabled = true);
+            lua["btools_disable"]   = new Action(() => BtoolsMod.Enabled = false);
+            lua["btools_set_tool"]  = new Action<int>(tool => BtoolsMod.SelectedTool = tool);
+            lua["btools_get_tool"]  = new Func<int>(() => BtoolsMod.SelectedTool);
+            lua["btools_is_enabled"] = new Func<bool>(() => BtoolsMod.Enabled);
 
             // ── Offsets table (exposes Roblox memory offsets to Lua scripts) ──
             lua["offsets"] = new Dictionary<string, long>
