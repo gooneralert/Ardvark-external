@@ -604,16 +604,6 @@ namespace Offsets {
             public const long Translation = 36;
         }
     }
-    public static class Context {
-        public const long PrimitivePoolPtr = 0x1A0;
-    }
-    public static class PrimitivePool {
-        public const long ArrayBase = 0x20;
-    }
-    public static class PrimitiveRecord {
-        public const long Stride = 48;
-        public const long Translation = 36;
-    }
     public static class LuaState {
         public const long Base = 0x40;
         public const long Global = 0x28;

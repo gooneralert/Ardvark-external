@@ -1,5 +1,5 @@
 @echo off
-setlocal
+setlocal DisableDelayedExpansion
 
 set "REPO_ZIP_URL=https://github.com/gooneralert/Ardvark-external/archive/refs/heads/main.zip"
 set "TEMP_ZIP=%TEMP%\ardvark_update.zip"
@@ -25,8 +25,10 @@ if errorlevel 1 (
 )
 
 echo [*] Applying update...
-powershell -Command "Copy-Item -Path '%TEMP_EXTRACT%\Ardvark-external-main\*' -Destination '%SELF%' -Recurse -Force"
-if errorlevel 1 (
+rem Exclude updater.bat so the running script is not overwritten mid-execution,
+rem which would corrupt the batch file and cause errors like "'ho' is not recognized".
+robocopy "%TEMP_EXTRACT%\Ardvark-external-main" "%SELF%" /E /XF updater.bat /NFL /NDL /NJH /NJS /NC /NS /NP
+if errorlevel 8 (
     echo [!] Failed to apply update.
     pause
     exit /b 1
