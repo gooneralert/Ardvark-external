@@ -40,8 +40,11 @@ echo.
 set "OFFSETS_DIR=%~dp0src\Ardvark\offsets"
 set "OFFSETS_URL=https://imtheo.lol/Offsets/Offsets.cs"
 set "FFLAGS_URL=https://imtheo.lol/Offsets/FFlags.cs"
+set "FALLBACK_URL=https://awaky1337.github.io/jewsploit-offsets/Offsets.h"
 set "OFFSETS_FILE=%OFFSETS_DIR%\offsets.cs"
 set "FFLAGS_FILE=%OFFSETS_DIR%\FFlags.cs"
+set "FALLBACK_FILE=%OFFSETS_DIR%\Offsets.h"
+set "MERGE_SCRIPT=%~dp0merge_offsets.ps1"
 
 if not exist "%OFFSETS_DIR%" mkdir "%OFFSETS_DIR%"
 
@@ -62,6 +65,24 @@ if errorlevel 1 (
     exit /b 1
 )
 echo [+] FFlags.cs updated
+
+echo [*] Downloading fallback offsets (jewsploit)...
+curl.exe -s -L -o "%FALLBACK_FILE%" "%FALLBACK_URL%"
+if errorlevel 1 (
+    echo [!] Failed to download fallback Offsets.h
+    pause
+    exit /b 1
+)
+echo [+] Offsets.h downloaded
+
+echo [*] Merging fallback offsets into offsets.cs...
+powershell -NoProfile -ExecutionPolicy Bypass -File "%MERGE_SCRIPT%" -PrimaryCsPath "%OFFSETS_FILE%" -FallbackHPath "%FALLBACK_FILE%" -OutputCsPath "%OFFSETS_FILE%"
+if errorlevel 1 (
+    echo [!] Failed to merge offsets
+    pause
+    exit /b 1
+)
+echo [+] Offsets merged (fallback values only used where primary is missing)
 
 echo.
 echo [*] Building...
