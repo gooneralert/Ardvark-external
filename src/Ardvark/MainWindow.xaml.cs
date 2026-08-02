@@ -186,6 +186,7 @@ namespace FoulzExternal
                 if (SilentPredictionYSlider != null) SilentPredictionYSlider.Value = Options.Settings.Silent.PredictionY;
                 if (SilentPredictionYValueText != null) SilentPredictionYValueText.Text = Options.Settings.Silent.PredictionY.ToString("0");
                 if (SilentAimbotKeyButton != null) { var kb = Options.Settings.Silent.SilentAimbotKey; if (kb != null) SilentAimbotKeyButton.Content = kb.Key > 0 ? KeyInterop.KeyFromVirtualKey(kb.Key).ToString() : kb.MouseButton >= 0 ? (kb.MouseButton == 0 ? "M1" : kb.MouseButton == 1 ? "M2" : "M3") : "SET"; }
+                if (SilentMethodCombo != null) SilentMethodCombo.SelectedIndex = Options.Settings.Silent.SilentMethod;
             }
             catch { }
             finally { _shutup = false; }
@@ -525,7 +526,7 @@ namespace FoulzExternal
                     _lookin?.Cancel();
                     _lookin = null;
 
-                    try { player.Start(); playerobjects.Start(); HumanoidModule.Start(); TPHandler.Start(); CameraModule.Start(); visuals.Start(); aiming.Start(); desync.Start(); flight.Start(); carfly.Start(); noclip.Start(); fps.Start(); gravity.Start(); tickrate.Start(); silentaiming.Start(); btools.Start(); } catch { }
+                    try { player.Start(); playerobjects.Start(); HumanoidModule.Start(); TPHandler.Start(); CameraModule.Start(); visuals.Start(); aiming.Start(); desync.Start(); flight.Start(); carfly.Start(); noclip.Start(); fps.Start(); gravity.Start(); tickrate.Start(); silentaiming.Start(); raycastsilent.Start(); btools.Start(); } catch { }
 
 
                     Dispatcher.Invoke(() =>
@@ -608,7 +609,7 @@ namespace FoulzExternal
 
         private void startvibing(object sender, RoutedEventArgs e) { ((Storyboard)Resources["FadeInSequence"]).Begin(); settheme(Color.FromRgb(255, 79, 163)); }
 
-        private void bye(object sender, RoutedEventArgs e) { try { HumanoidModule.Stop(); CameraModule.Stop(); visuals.Stop(); TPHandler.Stop(); aiming.Stop(); desync.Stop(); flight.Stop(); fps.Stop(); gravity.Stop(); tickrate.Stop(); silentaiming.Stop(); btools.Stop(); IMGUI.Program.kill();} catch { } Application.Current.Shutdown(); }
+        private void bye(object sender, RoutedEventArgs e) { try { HumanoidModule.Stop(); CameraModule.Stop(); visuals.Stop(); TPHandler.Stop(); aiming.Stop(); desync.Stop(); flight.Stop(); fps.Stop(); gravity.Stop(); tickrate.Stop(); silentaiming.Stop(); raycastsilent.Stop(); btools.Stop(); IMGUI.Program.kill();} catch { } Application.Current.Shutdown(); }
 
         protected override void OnMouseLeftButtonDown(MouseButtonEventArgs e) { if (e.ChangedButton == MouseButton.Left) DragMove(); }
 
@@ -709,6 +710,14 @@ namespace FoulzExternal
         private void silentvisualizertgl(object sender, RoutedEventArgs e) { if (_shutup || !(sender is ToggleButton tb)) return; tb.Content = tb.IsChecked == true ? "ON" : "OFF"; Options.Settings.Silent.SilentVisualizer = tb.IsChecked == true; }
         private void silentshowfovtgl(object sender, RoutedEventArgs e) { if (_shutup || !(sender is ToggleButton tb)) return; tb.Content = tb.IsChecked == true ? "ON" : "OFF"; Options.Settings.Silent.ShowSilentFOV = tb.IsChecked == true; }
         private void silentpredictiontgl(object sender, RoutedEventArgs e) { if (_shutup || !(sender is ToggleButton tb)) return; tb.Content = tb.IsChecked == true ? "ON" : "OFF"; Options.Settings.Silent.SPrediction = tb.IsChecked == true; }
+        private void silentmethod(object sender, System.Windows.Controls.SelectionChangedEventArgs e)
+        {
+            if (_shutup || SilentMethodCombo == null) return;
+            int idx = SilentMethodCombo.SelectedIndex;
+            Options.Settings.Silent.SilentMethod = idx;
+            Options.Settings.Silent.RaycastSilent = (idx == 2);
+            Options.Settings.Silent.MagicBullet = (idx == 3);
+        }
         private void silentfov(object sender, RoutedPropertyChangedEventArgs<double> e) { if (_shutup || SilentFovSlider == null) return; Options.Settings.Silent.SFOV = (float)SilentFovSlider.Value; if (SilentFovValueText != null) SilentFovValueText.Text = Options.Settings.Silent.SFOV.ToString("0"); }
         private void silentpredx(object sender, RoutedPropertyChangedEventArgs<double> e) { if (_shutup || SilentPredictionXSlider == null) return; Options.Settings.Silent.PredictionX = (float)SilentPredictionXSlider.Value; if (SilentPredictionXValueText != null) SilentPredictionXValueText.Text = Options.Settings.Silent.PredictionX.ToString("0"); }
         private void silentpredy(object sender, RoutedPropertyChangedEventArgs<double> e) { if (_shutup || SilentPredictionYSlider == null) return; Options.Settings.Silent.PredictionY = (float)SilentPredictionYSlider.Value; if (SilentPredictionYValueText != null) SilentPredictionYValueText.Text = Options.Settings.Silent.PredictionY.ToString("0"); }

@@ -95,6 +95,9 @@ namespace Options
         public float PredictionY = 2f;
         public float PredictionX = 2f;
         public float SFOV = 150f;
+        public bool RaycastSilent = false;
+        public bool MagicBullet = false;
+        public int SilentMethod = 0; // 0=Off, 1=Rivals, 2=Raycast, 3=Magic Bullet
 
         public Silent() { }
     }

@@ -11,13 +11,19 @@ memory in the process, and writing the correct vtable pointers.
 
 Offsets
 ───────
-WorkspaceCurrentCommand = 0x860
-WorkspaceStickyCommand  = 0x870
-MouseCommandWorkspace   = 0x50
-ToolAllocationSize      = 0xD0
+These offsets are maintained in:
+  src/Ardvark/offsets/manual_offsets.cs  (ManualOffsets.Btools class)
 
-Player.Mouse            = 0x11E0
-PlayerMouse.Workspace   = 0x150
+WorkspaceCurrentCommand = 0x860  (ManualOffsets.Btools.WorkspaceCurrentCommand)
+WorkspaceStickyCommand  = 0x870  (ManualOffsets.Btools.WorkspaceStickyCommand)
+MouseCommandWorkspace   = 0x50   (ManualOffsets.Btools.MouseCommandWorkspace)
+ToolAllocationSize      = 0xD0   (ManualOffsets.Btools.ToolAllocationSize)
+
+Player.Mouse            = 0x11E0 (from offsets.cs)
+PlayerMouse.Workspace   = 0x150  (from offsets.cs)
+
+See src/Ardvark/offsets/offsets_tutorial.md for instructions on
+how to find/update the manual offsets when Roblox updates.
 
 RTTI Names
 ──────────

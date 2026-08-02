@@ -62,7 +62,7 @@ namespace FoulzExternal.features.games.universal.aiming.silent
 
                     var s = Options.Settings.Silent;
                     bool key = s.SilentAimbotKey.IsPressed();
-                    bool active = s.SilentAimbot && (s.AlwaysOn || key);
+                    bool active = s.SilentAimbot && (s.AlwaysOn || key) && s.SilentMethod == 1;
 
                     get_pos(out var mouse);
                     var next = new Scene();

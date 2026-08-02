@@ -9,11 +9,11 @@ namespace FoulzExternal.features.games.universal.btools
 {
     internal static class btools
     {
-        // Offsets sourced from btools_offsets.cs
-        private const long WorkspaceCurrentCommand = btools_offsets.WorkspaceCurrentCommand;
-        private const long WorkspaceStickyCommand = btools_offsets.WorkspaceStickyCommand;
-        private const long MouseCommandWorkspace = btools_offsets.MouseCommandWorkspace;
-        private const int ToolAllocationSize = btools_offsets.ToolAllocationSize;
+        // Offsets sourced from ManualOffsets (offsets/manual_offsets.cs)
+        private const long WorkspaceCurrentCommand = ManualOffsets.Btools.WorkspaceCurrentCommand;
+        private const long WorkspaceStickyCommand = ManualOffsets.Btools.WorkspaceStickyCommand;
+        private const long MouseCommandWorkspace = ManualOffsets.Btools.MouseCommandWorkspace;
+        private const int ToolAllocationSize = ManualOffsets.Btools.ToolAllocationSize;
 
         // Internal constants (don't change between Roblox versions)
         private const int ControlBlockSize = 0x20;

@@ -581,6 +581,18 @@
                                     <ToggleButton x:Name="SilentPredictionToggle" HorizontalAlignment="Right" Width="45" Height="22" Style="{StaticResource toggle_vibe}" Content="ON" Click="silentpredictiontgl"/>
                                 </Grid>
                             </Border>
+
+                            <Border Background="#0A0A0A" BorderBrush="#111" BorderThickness="1" Padding="12" Margin="0,0,0,10" CornerRadius="4">
+                                <StackPanel>
+                                    <TextBlock Text="SILENT METHOD" Foreground="{DynamicResource AccentBrush}" Opacity="0.7" FontSize="10" FontWeight="SemiBold"/>
+                                    <ComboBox x:Name="SilentMethodCombo" HorizontalAlignment="Right" Width="160" Style="{StaticResource combo_chill}" SelectionChanged="silentmethod" Margin="0,5,0,0">
+                                        <ComboBoxItem Content="Off" Tag="0" IsSelected="True"/>
+                                        <ComboBoxItem Content="Rivals" Tag="1"/>
+                                        <ComboBoxItem Content="Raycast" Tag="2"/>
+                                        <ComboBoxItem Content="Magic Bullet" Tag="3"/>
+                                    </ComboBox>
+                                </StackPanel>
+                            </Border>
                         </StackPanel>
 
                         <StackPanel Visibility="{Binding IsChecked, ElementName=VisualsTab, Converter={StaticResource BooleanToVisibilityConverter}}">
