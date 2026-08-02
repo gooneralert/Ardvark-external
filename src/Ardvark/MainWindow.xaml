@@ -590,6 +590,7 @@
                                         <ComboBoxItem Content="Rivals" Tag="1"/>
                                         <ComboBoxItem Content="Raycast" Tag="2"/>
                                         <ComboBoxItem Content="Magic Bullet" Tag="3"/>
+                                        <ComboBoxItem Content="Phantom Forces" Tag="4"/>
                                     </ComboBox>
                                 </StackPanel>
                             </Border>

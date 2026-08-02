@@ -303,8 +303,9 @@ namespace FoulzExternal.features.games.universal.aiming.silent
                     bool active = s.SilentAimbot && (s.AlwaysOn || key);
 
                     // Determine if raycast silent or magic bullet is enabled
-                    bool raycastOn = active && (s.SilentMethod == 2 || s.SilentMethod == 3);
-                    bool magicOn = active && s.SilentMethod == 3;
+                    // Suppress when in Phantom Forces (PF uses its own silent aim)
+                    bool raycastOn = active && (s.SilentMethod == 2 || s.SilentMethod == 3) && !phantomsilent.IsActivePlace();
+                    bool magicOn = active && s.SilentMethod == 3 && !phantomsilent.IsActivePlace();
 
                     if (!raycastOn && !magicOn)
                     {

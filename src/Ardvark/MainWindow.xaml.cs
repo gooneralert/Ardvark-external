@@ -526,7 +526,7 @@ namespace FoulzExternal
                     _lookin?.Cancel();
                     _lookin = null;
 
-                    try { player.Start(); playerobjects.Start(); HumanoidModule.Start(); TPHandler.Start(); CameraModule.Start(); visuals.Start(); aiming.Start(); desync.Start(); flight.Start(); carfly.Start(); noclip.Start(); fps.Start(); gravity.Start(); tickrate.Start(); silentaiming.Start(); raycastsilent.Start(); btools.Start(); } catch { }
+                    try { player.Start(); playerobjects.Start(); HumanoidModule.Start(); TPHandler.Start(); CameraModule.Start(); visuals.Start(); aiming.Start(); desync.Start(); flight.Start(); carfly.Start(); noclip.Start(); fps.Start(); gravity.Start(); tickrate.Start(); silentaiming.Start(); raycastsilent.Start(); phantomsilent.Start(); btools.Start(); } catch { }
 
 
                     Dispatcher.Invoke(() =>
@@ -609,7 +609,7 @@ namespace FoulzExternal
 
         private void startvibing(object sender, RoutedEventArgs e) { ((Storyboard)Resources["FadeInSequence"]).Begin(); settheme(Color.FromRgb(255, 79, 163)); }
 
-        private void bye(object sender, RoutedEventArgs e) { try { HumanoidModule.Stop(); CameraModule.Stop(); visuals.Stop(); TPHandler.Stop(); aiming.Stop(); desync.Stop(); flight.Stop(); fps.Stop(); gravity.Stop(); tickrate.Stop(); silentaiming.Stop(); raycastsilent.Stop(); btools.Stop(); IMGUI.Program.kill();} catch { } Application.Current.Shutdown(); }
+        private void bye(object sender, RoutedEventArgs e) { try { HumanoidModule.Stop(); CameraModule.Stop(); visuals.Stop(); TPHandler.Stop(); aiming.Stop(); desync.Stop(); flight.Stop(); fps.Stop(); gravity.Stop(); tickrate.Stop(); silentaiming.Stop(); raycastsilent.Stop(); phantomsilent.Stop(); btools.Stop(); IMGUI.Program.kill();} catch { } Application.Current.Shutdown(); }
 
         protected override void OnMouseLeftButtonDown(MouseButtonEventArgs e) { if (e.ChangedButton == MouseButton.Left) DragMove(); }
 
