@@ -180,72 +180,6 @@ namespace FoulzExternal.features.games.universal.explorer
                 pnl_proximity.Visibility = Visibility.Collapsed;
             }
 
-            // Attributes
-            LoadAttributes(i);
-        }
-
-        private void LoadAttributes(Instance i)
-        {
-            // Clear previous
-            p_attrs_list.Children.Clear();
-
-            try
-            {
-                var attrs = i.GetAllAttributes();
-                if (attrs == null || attrs.Count == 0)
-                {
-                    p_attrs_none.Visibility = Visibility.Visible;
-                    return;
-                }
-
-                p_attrs_none.Visibility = Visibility.Collapsed;
-
-                foreach (var kvp in attrs)
-                {
-                    var border = new Border
-                    {
-                        Background = new SolidColorBrush(Color.FromRgb(0x0D, 0x0D, 0x0D)),
-                        CornerRadius = new CornerRadius(3),
-                        Padding = new Thickness(8, 5, 8, 5),
-                        Margin = new Thickness(0, 0, 0, 4)
-                    };
-
-                    var grid = new Grid();
-                    grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(80) });
-                    grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
-
-                    var keyText = new TextBlock
-                    {
-                        Text = kvp.Key,
-                        Foreground = new SolidColorBrush(Color.FromRgb(0x77, 0x77, 0x77)),
-                        FontSize = 9,
-                        VerticalAlignment = VerticalAlignment.Center,
-                        TextWrapping = TextWrapping.NoWrap,
-                        TextTrimming = TextTrimming.CharacterEllipsis
-                    };
-                    Grid.SetColumn(keyText, 0);
-
-                    var valText = new TextBlock
-                    {
-                        Text = kvp.Value,
-                        Foreground = new SolidColorBrush(Color.FromRgb(0xCC, 0xCC, 0xCC)),
-                        FontSize = 9,
-                        VerticalAlignment = VerticalAlignment.Center,
-                        TextWrapping = TextWrapping.NoWrap,
-                        TextTrimming = TextTrimming.CharacterEllipsis
-                    };
-                    Grid.SetColumn(valText, 1);
-
-                    grid.Children.Add(keyText);
-                    grid.Children.Add(valText);
-                    border.Child = grid;
-                    p_attrs_list.Children.Add(border);
-                }
-            }
-            catch
-            {
-                p_attrs_none.Visibility = Visibility.Visible;
-            }
         }
 
         private void clear_props()
@@ -261,8 +195,6 @@ namespace FoulzExternal.features.games.universal.explorer
             pnl_proximity.Visibility = Visibility.Collapsed;
             selected_addr = 0;
             selected_class = "";
-            p_attrs_list.Children.Clear();
-            p_attrs_none.Visibility = Visibility.Visible;
         }
 
         private void BtnTeleport_Click(object sender, RoutedEventArgs e)

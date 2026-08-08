@@ -315,7 +315,6 @@ namespace FoulzExternal.features.games.universal.scriptrunner
     public class LuaInstance
     {
         private static int _tblSeq;
-        private static readonly System.Collections.Concurrent.ConcurrentDictionary<string, object?> _attributes = new();
         internal readonly SDKInst _inst;
 
         public LuaInstance(SDKInst inst)  { _inst = inst; }
@@ -503,23 +502,6 @@ namespace FoulzExternal.features.games.universal.scriptrunner
             var all = new List<LuaInstance>();
             try { Recurse(_inst, all, 0); } catch { }
             return BuildTable(lua, all, x => x);
-        }
-
-        public LuaTable GetAttributes()
-        {
-            var lua = ScriptEngine.ActiveState ?? throw new InvalidOperationException("No active Lua state");
-            var values = new Dictionary<string, object?>();
-
-            try
-            {
-                foreach (var attr in _inst.GetAllAttributes())
-                {
-                    values[attr.Key] = LuaHelpers.ParseAttributeValue(attr.Value);
-                }
-            }
-            catch { }
-
-            return ScriptEngine.CreateLuaMapTable(lua, values);
         }
 
         private static void Recurse(SDKInst inst, List<LuaInstance> list, int depth)
@@ -964,13 +946,13 @@ namespace FoulzExternal.features.games.universal.scriptrunner
                             return value;
                     }
 
-                    return _attributes.TryGetValue(Address + ":Text", out var cached) ? cached?.ToString() ?? string.Empty : string.Empty;
+                    return string.Empty;
                 }
                 catch { return string.Empty; }
             }
             set
             {
-                _attributes[Address + ":Text"] = value ?? string.Empty;
+                // Text set — no attribute backing store
             }
         }
 
@@ -1015,67 +997,9 @@ namespace FoulzExternal.features.games.universal.scriptrunner
                 try
                 {
                     TrySetValueObject(this, value);
-                    _attributes[Address + ":Value"] = value;
                 }
                 catch { }
             }
-        }
-
-        public object? GetAttribute(string name)
-        {
-            try
-            {
-                var child = FindFirstChild(name);
-                if (child != null)
-                {
-                    var childValue = child.Value;
-                    if (childValue != null) return childValue;
-                }
-
-                string raw = _inst.GetAttribute(name);
-                if (!string.IsNullOrEmpty(raw))
-                {
-                    if (bool.TryParse(raw, out var boolValue)) return boolValue;
-                    if (double.TryParse(raw, out var numberValue)) return numberValue;
-                    return raw;
-                }
-
-                return _attributes.TryGetValue(Address + ":" + name, out var value) ? value : null;
-            }
-            catch { return null; }
-        }
-
-        public void SetAttribute(string name, object? value)
-        {
-            try
-            {
-                // Always attempt to write to actual Roblox memory first so that
-                // game LocalScripts reading :GetAttribute() see the updated value.
-                // The attribute must already exist in memory (server has set it at
-                // least once); SetAttributeValue walks the live attribute list.
-                if (value != null)
-                {
-                    try
-                    {
-                        // Try as float first — covers numbers, multipliers, etc.
-                        _inst.SetAttributeValue(name, Convert.ToSingle(value));
-                    }
-                    catch
-                    {
-                        // Fallback: try as int for whole-number attributes
-                        try { _inst.SetAttributeValue(name, Convert.ToInt32(value)); } catch { }
-                    }
-                }
-
-                // Also propagate to any child ValueObject with the same name
-                var child = FindFirstChild(name);
-                if (child != null)
-                    TrySetValueObject(child, value);
-
-                // Keep local cache in sync for our own GetAttribute reads
-                _attributes[Address + ":" + name] = value;
-            }
-            catch { }
         }
 
         private static void TrySetValueObject(LuaInstance instance, object? value)
@@ -1659,17 +1583,6 @@ namespace FoulzExternal.features.games.universal.scriptrunner
             uint g = (uint)Math.Clamp((int)Math.Round(color.G * 255f), 0, 255);
             uint b = (uint)Math.Clamp((int)Math.Round(color.B * 255f), 0, 255);
             return (r << 16) | (g << 8) | b;
-        }
-
-        internal static object? ParseAttributeValue(string raw)
-        {
-            if (string.IsNullOrEmpty(raw))
-                return null;
-            if (bool.TryParse(raw, out var boolValue))
-                return boolValue;
-            if (double.TryParse(raw, NumberStyles.Any, CultureInfo.InvariantCulture, out var numberValue))
-                return numberValue;
-            return raw;
         }
 
         internal static string ReadRobloxString(long address)

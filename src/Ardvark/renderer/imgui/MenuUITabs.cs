@@ -770,7 +770,7 @@ namespace IMGUI
 
         // ── SETTINGS TAB (Yerba settings + configs) ────────────────────────
         private static readonly string[] SettingLabels = {
-            "menu key", "debug console", "dex explorer", "accent color", "global accent color"
+            "menu key", "debug console", "dex explorer", "accent color", "global accent color", "overlay fps"
         };
 
         private static void DrawSettingsTab(ImDrawListPtr dl, Vector2 leftMin, Vector2 leftMax, Vector2 rightMin, Vector2 rightMax)
@@ -786,7 +786,8 @@ namespace IMGUI
 
                 var rowMin = new Vector2(ll, y);
                 var rowMax = new Vector2(lr, y + YerbaLayout.SettingRowH);
-                DrawLabelRow(dl, rowMin, rowMax, label);
+                if (i != 5)
+                    DrawLabelRow(dl, rowMin, rowMax, label);
 
                 switch (i)
                 {
@@ -819,6 +820,12 @@ namespace IMGUI
                         break;
                     }
                     case 4: DrawCheckboxRight(dl, rowMin, rowMax, ref accentColorEnabled); break;
+                    case 5:
+                    {
+                        // overlay fps — controls the ImGui render loop rate
+                        DrawSliderRow(dl, ll, lr, y, "overlay fps", ref Program.overlayFps, 1f, 240f);
+                        break;
+                    }
                 }
 
                 y = NextRow(y);

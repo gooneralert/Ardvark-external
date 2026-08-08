@@ -239,24 +239,12 @@ namespace Offsets {
          public const long WalkspeedCheck = 0x3bc;
     }
 
-    public static class Attribute {
-         public const long Key = 0x0;
-         public const long Size = 0x58;
-         public const long Value = 0x18;
-    }
-
-    public static class AttributesMap {
-         public const long Attributes = 0x10;
-         public const long Length = 0x0;
-    }
-
     public static class Instance {
          public const long ChildrenEnd = 0x8;
          public const long ChildrenStart = 0x78;
          public const long ClassBase = 0x1b0;
          public const long ClassDescriptor = 0x18;
          public const long ClassName = 0x8;
-         public const long ComponentMap = 0x38;
          public const long Name = 0x8;
          public const long NameContainer = 0x70;
          public const long Parent = 0x68;

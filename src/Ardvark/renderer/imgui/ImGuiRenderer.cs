@@ -46,6 +46,11 @@ namespace IMGUI
         public static float crosshairDotSize = 1.5f;
         public static uint crosshairColor = 0xFFFFFFFF;
 
+        // ── Overlay FPS (controls the render loop rate) ──────────────────────
+        public static float overlayFps = 60f;
+        private static readonly Stopwatch frameClock = Stopwatch.StartNew();
+        private static long lastFrameMs;
+
         private static ExitEventHandler? onAppExit;
         private static EventHandler? onDispatcherShutdown;
         private static EventHandler? onProcessExit;
@@ -58,8 +63,33 @@ namespace IMGUI
         [DllImport("user32.dll")] private static extern bool PostMessage(IntPtr hWnd, uint msg, IntPtr wParam, IntPtr lParam);
         private const uint WM_CLOSE = 0x0010;
 
+        protected override Task PostInitialized()
+        {
+            // The base class locks the render loop to the monitor refresh via
+            // VSync unless we disable it. With VSync off we throttle the loop
+            // ourselves in Render() using the configurable overlay FPS.
+            this.VSync = false;
+            return Task.CompletedTask;
+        }
+
         protected override void Render()
         {
+            // Respect the configurable overlay FPS live so the Settings slider
+            // takes effect immediately.
+            int targetFps = (int)Math.Clamp(overlayFps, 1f, 240f);
+            long frameMs = 1000L / targetFps;
+            long now = frameClock.ElapsedMilliseconds;
+            long elapsed = now - lastFrameMs;
+            if (elapsed < frameMs)
+            {
+                int sleep = (int)(frameMs - elapsed);
+                if (sleep > 1)
+                    Thread.Sleep(sleep - 1);
+                // spin-wait for the final ~1ms for precision
+                while (frameClock.ElapsedMilliseconds - lastFrameMs < frameMs) { }
+            }
+            lastFrameMs = frameClock.ElapsedMilliseconds;
+
             var v = visuals.GetSceneSnapshot();
             if (v != null)
             {
