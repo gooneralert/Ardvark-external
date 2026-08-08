@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Text;
 using System.Threading;
 using FoulzExternal.SDK;
 using FoulzExternal.storage;
@@ -10,12 +11,28 @@ namespace FoulzExternal.features.games.universal.btools
     internal static class btools
     {
         // Offsets sourced from ManualOffsets (offsets/manual_offsets.cs)
+        // Workspace Command pipeline is a shared_ptr<MouseCommand> pair:
+        //   [ptr + 0x00] = command pointer
+        //   [ptr + 0x08] = refcount control block (shared_ptr ctrl)
         private const long WorkspaceCurrentCommand = ManualOffsets.Btools.WorkspaceCurrentCommand;
+        private const long WorkspaceCurrentRefCount = ManualOffsets.Btools.WorkspaceCurrentRefCount;
         private const long WorkspaceStickyCommand = ManualOffsets.Btools.WorkspaceStickyCommand;
+        private const long WorkspaceStickyRefCount = ManualOffsets.Btools.WorkspaceStickyRefCount;
         private const long MouseCommandWorkspace = ManualOffsets.Btools.MouseCommandWorkspace;
         private const int ToolAllocationSize = ManualOffsets.Btools.ToolAllocationSize;
 
         // Internal constants (don't change between Roblox versions)
+        // The real HammerTool constructor (sub_1421C15C0) sets the
+        // ref count at offset 8 to -1. We must do the same or the
+        // game's shared_ptr ref-counting will crash.
+        private const int ToolRefCountOffset = 0x8;
+        private const long ToolRefCountValue = -1;
+
+        // Control block structure (shared_ptr refcount object)
+        // The game does `lock inc dword ptr [ctrl+8]` on Workspace::Process
+        // and `_InterlockedExchangeAdd(ctrl+12, -1)` on release — so +8 (uses)
+        // and +12 (weaks) must be 1/0. The old "ControlBlockValue1 = 0x7FFFFFF0"
+        // is a large use-count so the game never actually deletes our block.
         private const int ControlBlockSize = 0x20;
         private const int ControlBlockField1 = 0x8;
         private const int ControlBlockField2 = 0xC;
@@ -121,9 +138,9 @@ namespace FoulzExternal.features.games.universal.btools
                             if (saved_original)
                             {
                                 mem.Write(workspace + WorkspaceCurrentCommand, original_current_object);
-                                mem.Write(workspace + WorkspaceCurrentCommand + 8, original_current_control);
+                                mem.Write(workspace + WorkspaceCurrentRefCount, original_current_control);
                                 mem.Write(workspace + WorkspaceStickyCommand, original_sticky_object);
-                                mem.Write(workspace + WorkspaceStickyCommand + 8, original_sticky_control);
+                                mem.Write(workspace + WorkspaceStickyRefCount, original_sticky_control);
                             }
                             active_tool = 0;
                             active_ctrl = 0;
@@ -319,6 +336,13 @@ namespace FoulzExternal.features.games.universal.btools
             return hammer_vtable != 0 || grab_vtable != 0 || clone_vtable != 0;
         }
 
+        /// <summary>
+        /// Creates a fake shared_ptr control block for the Workspace command slots.
+        /// The game reads ctrl+8 (use count) and ctrl+12 (weak count) via
+        /// `_InterlockedIncrement` / `_InterlockedExchangeAdd`. We set a huge
+        /// use-count so the game never deletes our block but increments/decrements
+        /// it safely.
+        /// </summary>
         private static long MakeControlBlock(Memory mem)
         {
             long control = mem.Allocate(ControlBlockSize);
@@ -331,16 +355,70 @@ namespace FoulzExternal.features.games.universal.btools
             return control;
         }
 
+        /// <summary>
+        /// Allocates a valid NameContainer for a fake Instance so that
+        /// Instance::GetName() — which Roblox changed to resolve
+        /// NameContainer → *NameContainer + Name — does not dereference
+        /// null and crash the game.
+        /// </summary>
+        private static long MakeNameContainer(Memory mem, string name)
+        {
+            const int containerSize = 0x40;
+            long container = mem.Allocate(containerSize);
+            if (container == 0) return 0;
+
+            byte[] zeroes = new byte[containerSize];
+            mem.WriteRaw(container, zeroes, zeroes.Length);
+
+            // The std::string lives at container + Offsets.Instance.Name (0x8).
+            long str = container + Offsets.Instance.Name;
+            byte[] strData = Encoding.UTF8.GetBytes(name);
+
+            if (strData.Length >= 16)
+            {
+                // Long string: heap pointer + size + capacity.
+                long heap = mem.Allocate(16);
+                if (heap == 0) return 0;
+                byte[] buf = new byte[16];
+                Array.Copy(strData, buf, Math.Min(16, strData.Length));
+                mem.WriteRaw(heap, buf, buf.Length);
+                mem.Write(str, heap);
+            }
+            else
+            {
+                // SSO: bytes inline (buffer already zeroed).
+                byte[] sso = new byte[16];
+                Array.Copy(strData, sso, strData.Length);
+                mem.WriteRaw(str, sso, sso.Length);
+            }
+
+            // _Mysize (offset 0x18) then _Myres (offset 0x20), write as long
+            // so the upper 4 bytes are 0 (little-endian: int read still works).
+            mem.Write(str + 0x18, (long)strData.Length);
+            mem.Write(str + 0x20, 15L); // SSO capacity
+
+            return container;
+        }
+
         private static bool ActivateWithVTable(Memory mem, long workspace, long vtable)
         {
             if (workspace == 0 || vtable == 0) return false;
 
+            // Sanity-check the vtable is a valid pointer within the Roblox module.
+            // Writing a discovered-but-garbage vtable into the fake tool object would
+            // make the game call into invalid memory → instant crash.
+            long modBase = Storage.BaseAddress;
+            long modSize = Storage.ModuleSize;
+            if (modBase == 0) return false;
+            long modEnd = modSize > 0 ? modBase + modSize : modBase + 0x10000000;
+            if (vtable < modBase || vtable >= modEnd) return false;
+
             if (!saved_original)
             {
                 original_current_object = mem.ReadPtr(workspace + WorkspaceCurrentCommand);
-                original_current_control = mem.ReadPtr(workspace + WorkspaceCurrentCommand + 8);
+                original_current_control = mem.ReadPtr(workspace + WorkspaceCurrentRefCount);
                 original_sticky_object = mem.ReadPtr(workspace + WorkspaceStickyCommand);
-                original_sticky_control = mem.ReadPtr(workspace + WorkspaceStickyCommand + 8);
+                original_sticky_control = mem.ReadPtr(workspace + WorkspaceStickyRefCount);
                 saved_original = true;
             }
 
@@ -349,16 +427,36 @@ namespace FoulzExternal.features.games.universal.btools
 
             byte[] zeroes = new byte[ToolAllocationSize];
             mem.WriteRaw(tool, zeroes, zeroes.Length);
+
+            // Match the real HammerTool constructor layout:
+            //   offset 0: vtable
+            //   offset 8: ref count = -1 (shared_ptr)
+            //   offset 0x50: workspace pointer
             mem.Write(tool, vtable);
+            mem.Write(tool + ToolRefCountOffset, ToolRefCountValue);
             mem.Write(tool + MouseCommandWorkspace, workspace);
 
+            // Give the fake tool a valid NameContainer. Roblox changed
+            // Instance::GetName() to resolve NameContainer → name; with a
+            // zeroed NameContainer (0x70 == 0) the game dereferences null
+            // while processing the tool's name → crash.
+            long nameContainer = MakeNameContainer(mem, "Tool");
+            if (nameContainer == 0) return false;
+            mem.Write(tool + Offsets.Instance.NameContainer, nameContainer);
+
+            // Allocate one shared control block for both command slots.
             long control = MakeControlBlock(mem);
             if (control == 0) return false;
 
+            // Install the fake tool as both currentCommand (0x868/0x870) and
+            // stickyCommand (0x878/0x880) — each a shared_ptr pair.
+            // Verified:
+            //   Workspace::Process reads [0x868] + incs [ctrl+8]
+            //   ChangeMouseCommand writes [0x878] + [0x880] for sticky
             mem.Write(workspace + WorkspaceCurrentCommand, tool);
-            mem.Write(workspace + WorkspaceCurrentCommand + 8, control);
+            mem.Write(workspace + WorkspaceCurrentRefCount, control);
             mem.Write(workspace + WorkspaceStickyCommand, tool);
-            mem.Write(workspace + WorkspaceStickyCommand + 8, control);
+            mem.Write(workspace + WorkspaceStickyRefCount, control);
 
             active_tool = tool;
             active_ctrl = control;
@@ -396,9 +494,9 @@ namespace FoulzExternal.features.games.universal.btools
                     if (workspace != 0 && saved_original)
                     {
                         mem.Write(workspace + WorkspaceCurrentCommand, original_current_object);
-                        mem.Write(workspace + WorkspaceCurrentCommand + 8, original_current_control);
+                        mem.Write(workspace + WorkspaceCurrentRefCount, original_current_control);
                         mem.Write(workspace + WorkspaceStickyCommand, original_sticky_object);
-                        mem.Write(workspace + WorkspaceStickyCommand + 8, original_sticky_control);
+                        mem.Write(workspace + WorkspaceStickyRefCount, original_sticky_control);
                     }
                 }
             }

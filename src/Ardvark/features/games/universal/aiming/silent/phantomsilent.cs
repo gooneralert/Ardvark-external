@@ -34,7 +34,6 @@ namespace FoulzExternal.features.games.universal.aiming.silent
 
         // ── State ──────────────────────────────────────────────────
         private static bool _writerRun = false;
-        private static bool _writerStarted = false;
         private static volatile bool _active = false;
         private static long _camAddr = 0;
         private static bool _camIsPart = false;
@@ -62,7 +61,6 @@ namespace FoulzExternal.features.games.universal.aiming.silent
             try { _loop?.Join(200); } catch { }
             try { _writer?.Join(200); } catch { }
             _loop = null; _writer = null;
-            _writerStarted = false;
         }
 
         public static bool IsActivePlace()

@@ -12,10 +12,10 @@ Manual offsets are offsets that are not available in auto-dumped offset files an
 2. [Tools You Need](#tools-you-need)
 3. [How to Find Offsets in IDA Pro](#how-to-find-offsets-in-ida-pro)
 4. [Btools Offsets — Step by Step](#btools-offsets--step-by-step)
-   - [WorkspaceCurrentCommand (0x860)](#workspacecurrentcommand-0x860)
-   - [WorkspaceStickyCommand (0x870)](#workspacestickycommand-0x870)
-   - [MouseCommandWorkspace (0x50)](#mousecommandworkspace-0x50)
-   - [ToolAllocationSize (0xD0)](#toolallocationsize-0xd0)
+   - [WorkspaceCurrentCommand](#workspacecurrentcommand)
+   - [WorkspaceStickyCommand](#workspacestickycommand)
+   - [MouseCommandWorkspace](#mousecommandworkspace)
+   - [ToolAllocationSize](#toolallocationsize)
 5. [MCP Guide: Finding RaycastBoundDesc](#mcp-guide-finding-raycastbounddesc)
 6. [Btools Offsets Reference](#btools-offsets-reference)
 7. [Updating Offsets After a Roblox Update](#updating-offsets-after-a-roblox-update)
@@ -38,10 +38,12 @@ namespace ManualOffsets
 {
     public static class Btools
     {
-        public const long WorkspaceCurrentCommand = 0x860;
-        public const long WorkspaceStickyCommand = 0x870;
-        public const long MouseCommandWorkspace = 0x50;
-        public const int ToolAllocationSize = 0xD0;
+        public const long WorkspaceCurrentCommand  = 0x868;
+        public const long WorkspaceCurrentRefCount = 0x870;
+        public const long WorkspaceStickyCommand   = 0x878;
+        public const long WorkspaceStickyRefCount  = 0x880;
+        public const long MouseCommandWorkspace    = 0x50;
+        public const int  ToolAllocationSize       = 0xD0;
     }
 }
 ```
@@ -86,10 +88,13 @@ private const long WorkspaceCurrentCommand = ManualOffsets.Btools.WorkspaceCurre
 4. **Read the assembly to find the offset.**
    - Look for instructions like:
      ```
-     mov rax, [rcx + 860h]   ; reads Workspace.CurrentCommand
-     mov [rcx + 870h], rax   ; writes Workspace.StickyCommand
+     mov rax, [rcx + 868h]   ; reads Workspace.CurrentCommand
+     mov [r14 + 878h], rcx   ; writes Workspace.StickyCommand
      ```
    - The offset is the hex value after `rcx +` (or whatever register holds the object pointer).
+   - **Important:** these are `shared_ptr<MouseCommand>` pairs — each slot has a pointer
+     AND a separate refcount object 8 bytes later. `CurrentCommand` is at `0x868` with
+     its refcount at `0x870`; `StickyCommand` is at `0x878` with its refcount at `0x880`.
 
 5. **Note the offset and add it to `manual_offsets.cs`.**
 
@@ -111,24 +116,24 @@ To find these in IDA:
 
 ## Btools Offsets — Step by Step
 
-### WorkspaceCurrentCommand (0x860)
+### WorkspaceCurrentCommand
 
 This is the offset in the `Workspace` class that holds a pointer to the current `MouseCommand` object.
 
 **In IDA Pro:**
 
 1. Open Strings (`Shift+F12`) and search for `Workspace`.
-2. Look for strings like `"CurrentCommand"`, `"currentCommand"`, or `"setCurrentCommand"`.
+2. Look for strings like `"currentCommand"`, `"stickyCommand"`.
 3. Follow xrefs to the function that reads/writes this field.
 4. In the assembly, look for:
    ```
-   mov rax, [rcx + 860h]    ; reading CurrentCommand
+   mov rax, [rcx + 868h]    ; reading CurrentCommand
    ```
    or
    ```
-   mov [rcx + 860h], rax    ; writing CurrentCommand
+   mov [rcx + 868h], rax    ; writing CurrentCommand
    ```
-5. The offset `860h` = `0x860` is what you need.
+5. The offset `0x868` is what you need.
 
 **In ReClass.NET:**
 
@@ -139,18 +144,18 @@ This is the offset in the `Workspace` class that holds a pointer to the current 
 
 ---
 
-### WorkspaceStickyCommand (0x870)
+### WorkspaceStickyCommand
 
 This is the offset in the `Workspace` class that holds a pointer to the sticky `MouseCommand` object. It's typically right after `CurrentCommand`.
 
 **In IDA Pro:**
 
-1. Find the same function that references `CurrentCommand` (0x860).
+1. Find the same function that references `CurrentCommand`.
 2. Look nearby in the assembly for a second field access:
    ```
-   mov rax, [rcx + 870h]    ; reading StickyCommand
+   mov [r14 + 878h], rcx    ; writing StickyCommand
    ```
-3. The offset `870h` = `0x870`.
+3. The offset `0x878`.
 
 **In ReClass.NET:**
 
@@ -159,7 +164,7 @@ This is the offset in the `Workspace` class that holds a pointer to the sticky `
 
 ---
 
-### MouseCommandWorkspace (0x50)
+### MouseCommandWorkspace
 
 This is the offset within a `MouseCommand` (or tool) object that points back to the `Workspace`.
 
@@ -171,7 +176,7 @@ This is the offset within a `MouseCommand` (or tool) object that points back to 
    ```
    mov rax, [rcx + 50h]    ; reading workspace from MouseCommand
    ```
-4. The offset `50h` = `0x50`.
+4. The offset `0x50`.
 
 **In ReClass.NET:**
 
@@ -180,29 +185,61 @@ This is the offset within a `MouseCommand` (or tool) object that points back to 
 
 ---
 
-### ToolAllocationSize (0xD0)
+### ToolAllocationSize
 
 This is the size of the tool object (`HammerTool`, `GrabTool`, `CloneTool`) that needs to be allocated.
 
 **In IDA Pro:**
 
 1. Find the `HammerTool` constructor (search for `.?AVHammerTool@RBX@@` → follow xrefs).
-2. Look for the allocation call (typically `operator new` or a custom allocator):
+2. Follow xrefs to its constructor, then check the **factory** function (the caller that allocates
+   then calls the constructor). Look for the allocation call (typically `operator new` or a custom
+   allocator):
    ```
-   mov edx, 0D0h            ; size = 0xD0
-   call ??_M@YGXPAXI@Z       ; allocator
+   sub_142C7DD30(152)          ; size = 152 → 0x98  (Hammer)
+   sub_142C7DD30(208)          ; size = 208 → 0xD0  (Grab)
+   sub_142C7DD30(152)          ; size = 152 → 0x98  (Clone)
    ```
-   or
-   ```
-   push 0D0h
-   call <allocator>
-   ```
-3. The size `0D0h` = `0xD0` is the `ToolAllocationSize`.
+3. The largest size across Hammer/Grab/Clone is `0xD0` — use that as `ToolAllocationSize`
+   so one shared allocation is big enough for any tool.
 
 **In ReClass.NET:**
 
 1. Find a `HammerTool` object in memory (the `CurrentCommand` pointer when the hammer is active).
 2. Check the object's size — it should be `0xD0` bytes.
+
+---
+
+### Btools RTTI vtable discovery (what btools.cs actually does)
+
+`btools.cs` does **not** hardcode the Hammer/Grab/Clone vtables — it discovers them at runtime by
+walking the C++ RTTI chain. This is important to understand so you can verify the primitive
+offsets (especially `ToolAllocationSize`) against the real object layout.
+
+The discovery chain (`FindVTableByRtti` in `btools.cs`):
+
+1. **Find the type descriptor** — scan readable PE sections for the exact mangled RTTI name
+   (`.?AVHammerTool@RBX@@`, `.?AVGrabTool@RBX@@`, `.?AVCloneTool@RBX@@`). The type descriptor
+   (`RTTITypeDescriptor`) begins 16 bytes *before* the name string:
+   ```
+   [vftable ptr] [spare] [name ptr (RVA)]  -> "HammerTool@RBX@@"
+   ```
+   In the IDB the name pointer is a 32-bit RVA; the code computes it as
+   `typeInfo = name_string_addr - 16`, `typeDescriptorRva = typeInfo - base`.
+
+2. **Find the CompleteObjectLocator** — scan for the `(signature=1, typeDescriptorRva)` pair,
+   which is the standard `RTTICompleteObjectLocator` (signature is the first dword, the type
+   descriptor RVA is 12 bytes in).
+
+3. **Find the vtable** — scan for a qword that equals the CompleteObjectLocator address. The
+   vtable pointer (the value written at object offset `0`) is `locator_address + 8` (MSVC
+   vtables store the COL pointer 8 bytes before the first virtual function).
+
+**Validation guard (added to prevent crashes):** before writing a discovered vtable into the
+fake tool object, `ActivateWithVTable` checks it falls **inside the Roblox module's address
+range** (`Storage.BaseAddress` … `BaseAddress + ModuleSize`). If RTTI discovery returns garbage
+(e.g. the scan races a game update, or the module base moved), the activation bails out instead
+of installing a vtable that would make the game call invalid memory and crash.
 
 ---
 
@@ -217,14 +254,14 @@ Do **not** invent addresses. Every RVA must come from the open IDB (or a live pr
 
 1. `BoundFuncDesc` for WorldRoot methods sits in **high `.data` / BSS**.
 2. On disk / in a cold IDB the desc body is often **all `0x00` or `0xFF`**.
-   - `*(desc + 8)` (name) and `*(desc + 0x80)` (fn) are filled **at runtime**.
+   - The name (`desc + 8`) and fn pointer (`desc + 0x80`) fields are filled **at runtime**.
 3. Therefore these heuristics are **wrong** for this layout:
    - "xref to string `Raycast` → `place - 8` = BoundFuncDesc"
    - "scan for name pointer at `desc+8` in static file"
-4. Correct static method:
-   - WorldRoot **method-name table** (string pointers)
-   - WorldRoot **BoundFuncDesc pointer table** (pointers into `.data`)
-   - Same **order** and usually same **count** → index of `"Raycast"` selects the desc pointer.
+4. Correct static method (use the **IDA MCP tools**, not scripts):
+   - Find the xref to the exact `"Raycast"` string → it lands in the **registration function**.
+   - The registration function writes the desc's name field (`desc + 8`) and returns/uses the desc base address.
+   - Cross-confirm by finding the **BoundFuncDesc pointer table** in `.rdata` (consecutive qwords pointing into high `.data`).
 5. `RaycastBoundFn` is almost always **`0x80`**. Confirm live if a debugger/process is attached; otherwise keep `0x80`.
 
 Current expected shape (example only — values change every update):
@@ -236,73 +273,46 @@ public const long RaycastBoundFn   = 0x80;
 
 Usage: `slot = module_base + RaycastBoundDesc + RaycastBoundFn`.
 
-### Preferred path A — run the IDA script
-
-If the repo is available:
-
-1. Open the matching IDB for the target Roblox build.
-2. Run `tools/ida_find_raycast_desc.py` (File → Script file…).
-3. Copy printed `RaycastBoundDesc` / `RaycastBoundFn` into `manual_offsets.cs`.
-
-If the script output looks sane (Raycast index maps to a high RVA, nearby methods listed), **stop**. Done.
-
 ### Worked example (this repo's current build)
 
-The following was recovered from the `decrypted_version-145f189a6a974303.bin` IDB (imagebase `0x0`, so RVA == VA). Use it as a template for re-finding after an update.
+Recovered from the fresh Roblox IDB (imagebase `0x140000000`). Use it as a template for re-finding after an update.
 
-1. **Exact strings** (via `find_bytes`):
-   - `WorldRoot` → `0x6106be0`
-   - `ArePartsTouchingOthers` → `0x6135628` (first method string)
-   - `Blockcast` → `0x6135640`
-   - `FindPartOnRay` → `0x6135690`
-   - `Raycast` → `0x6135828`
+1. **Find the exact strings** (use `find` with type `string`):
+   - `WorldRoot` → `0x146cb8b30`
+   - `FindPartOnRay` → `0x146cb8db8`
+   - `Blockcast` → `0x146cb8e58`
+   - `Raycast` → `0x146cb8d78`
 
-2. **WorldRoot method-name table** at `0x611D030` — 16-byte pairs `(ptr "WorldRoot", ptr MethodName)`, 29 methods:
+2. **Locate the WorldRoot method-name table** — 16-byte pairs `(ptr "WorldRoot", ptr MethodName)` in `.rdata`. The `Raycast` entry is at `0x146854520`, so the table start is `0x1468543d0`:
    ```
    [00] ArePartsTouchingOthers
    [01] Blockcast
    [05] FindPartOnRay
    [21] Raycast          ← index 21
-   [24] Shapecast
-   [25] Spherecast
-   [28] findPartsInRegion3
+   ...
    ```
 
-3. **BoundFuncDesc pointer table** — scan `.rdata` for runs of exactly 29 consecutive qwords pointing into high `.data` (`.data` = `0x79AF000–0x8AD6000`). The matching run is at `0x65EB940` (first desc `0x8090EA0`). **Index 21 → `0x8091390`**.
-
-4. **Cross-confirm via the registration function** — xref to the `"Raycast"` string (`0x6135828`) from `0x528421` lands in `sub_528320`. Decompiled:
+3. **Cross-confirm via the registration function** — xref to the `"Raycast"` string (`0x146cb8d78`) from `0x142590e79` lands in `sub_142590E20`. Decompiled:
    ```c
-   sub_4C38790((unsigned int)&qword_8091390, v1, (unsigned int)"Raycast", 0, ...);
-   qword_8091390 = (__int64)off_65EBCC0;   // desc + 0x00
-   xmmword_8091410 = v9;                    // desc + 0x80 = (sub_3BE2F40, 0)
+   qword_1481E7150 = (__int64)&off_1468A1268;       // desc + 0x00
+   qword_1481E7158 = sub_140D65CD0(v12, "Raycast"); // desc + 0x08 = name
+   xmmword_1481E7160 = *a9;                          // desc + 0x10 = (fn, 0)
    ```
-   `0x8091410 = 0x8091390 + 0x80`, so the bound fn pointer is at **offset `0x80`** → `RaycastBoundFn = 0x80`.
+   `qword_1481E7150` is the desc base → RVA = `0x1481E7150 - 0x140000000 = 0x81E7150`.
 
-5. **Verify the bound function signature** — `sub_3BE2F40` decompiles to:
-   ```c
-   __int64 __fastcall sub_3BE2F40(__int64 a1, __int64 a2, __int64 *a3, __int64 *a4, __int64 a5)
-   ```
-   - `a1` = rcx (this/WorldRoot)
-   - `a2` = rdx (output)
-   - `a3` = r8 (**origin**)
-   - `a4` = r9 (**direction**)
-   - `a5` = stack (raycastParams)
-   This confirms the hook thunk's ABI assumption that `r8 = origin`, `r9 = direction`.
+4. **Cross-confirm via the BoundFuncDesc pointer table** — the 8-byte pointer `0x1481E7150` appears in `.rdata` at `0x1461744c8`, inside a run of consecutive desc pointers (the pointer table). The `Raycast` entry at index 21 of the method-name table maps into this same table.
 
-6. **Result**:
+5. **Result**:
    ```csharp
-   public const long RaycastBoundDesc = 0x8091390;
+   public const long RaycastBoundDesc = 0x81E7150;
    public const long RaycastBoundFn   = 0x80;
    ```
 
 > **CRITICAL — CFG (Control Flow Guard):** Roblox is built with CFG enabled. When you overwrite the `BoundFuncDesc` function pointer to point at your stub, the indirect call through it is CFG-checked. If the stub is **not** marked as a valid call target, Roblox crashes instantly the first time a raycast fires. You **must** call `SetProcessValidCallTargets` on the stub's page after writing it (see `MarkCfg` in `raycastsilent.cs`). The C++ reference (`raycastsilent stuff/RaycastSilent.cpp`) does this via `mark_cfg(stub)`; the C# port must do the same or it will crash on the first shot.
 
-### Path B — find via IDA MCP tools (for an AI)
+### Step-by-step using IDA MCP tools
 
-Server: `user-ida-pro-mcp`.
-
-Always discover tool schemas with `GetMcpTools` before calling unfamiliar tools.
-Keep outputs small. Prefer `py_eval` for multi-step scans; use `find` / `xrefs_to` only for confirmation.
+Server: `IDA MCP`.
 
 #### Step 0 — health + imagebase
 
@@ -315,96 +325,37 @@ Note `imagebase` (often `0x140000000`). All RVAs = `VA - imagebase`.
 
 #### Step 1 — confirm exact strings exist
 
-Search exact C-strings (not substrings):
+Use `find` with type `string` for:
 
 - `WorldRoot`
 - `Raycast`
 - `FindPartOnRay`
-- optionally `Blockcast`, `Spherecast`
-
-MCP options:
-
-- `find` / `find_regex` / `search_text` for the string
-- or `py_eval` over `idautils.Strings()` with `str(s) == "Raycast"`
 
 If `"Raycast"` or `"WorldRoot"` is missing, wrong binary / stripped IDB — stop.
 
-#### Step 2 — recover WorldRoot method-name table
+#### Step 2 — find the registration function via xrefs
 
-Pattern in `.rdata` (or similar): repeating pairs
+Use `xrefs_to` on the exact `"Raycast"` string address. The single xref lands in the WorldRoot method registration function. Decompile it and identify the desc base address (the qword whose `+8` is set to the `"Raycast"` name, and whose `+0x10` gets the fn pointer pair).
 
+Compute:
 ```text
-qword: pointer to "WorldRoot"
-qword: pointer to MethodName   // ArePartsTouchingOthers, Blockcast, ..., Raycast, ...
-```
-
-Algorithm via `py_eval`:
-
-1. Find VA of exact string `"WorldRoot"`.
-2. `bin_search` for that 8-byte little-endian pointer across non-code (or whole image).
-   - IDA 9.x: `parse_binpat_str` returns `""` on success; check `len(pats)`.
-   - `bin_search` may return `(ea, status)` — use `ea = r[0]`.
-3. At each hit `H`, try walking:
-   - mode `cm`: `cstr(*(H)) == "WorldRoot"` and `cstr(*(H+8))` is a method name; step `+0x10`
-   - mode `mc`: swapped order
-4. Read C-strings **byte-by-byte until `\0`**. Do **not** use `get_strlit_contents` — IDA merges adjacent rdata names and breaks matching.
-5. Keep the **longest** run that contains **all** of:
-   - `Raycast`
-   - `FindPartOnRay`
-   - at least two of `Blockcast` / `Spherecast` / `Shapecast`
-6. Record:
-   - `methods[]` list
-   - `idx = methods.index("Raycast")`
-
-Sanity: typically ~25–40 methods. Index of `Raycast` is usually mid/late in the list.
-
-#### Step 3 — recover BoundFuncDesc pointer table
-
-Near the **method name string cluster** (same area as `"FindPartOnRay"`, `"Raycast"`, `"Spherecast"`):
-
-Just **before** those strings there is a table of consecutive qwords:
-
-```text
-qword: pointer into high .data  // BoundFuncDesc for methods[0]
-qword: pointer into high .data  // methods[1]
-...
-```
-
-Algorithm via `py_eval`:
-
-1. Take VA of exact `"FindPartOnRay"` (fallback: `"Raycast"`).
-2. Scan backward ~`0x400` bytes, 8-byte aligned.
-3. Collect the longest run of qwords `V` where:
-   - `V` is inside the image
-   - target segment is **not executable**
-   - RVA `(V - imagebase)` is **high** (this build: often `> 0x4000000`, commonly `0x8xxxxxx`)
-4. Prefer a run whose **length == len(methods)**.
-5. Then:
-
-```text
-desc_va  = table[idx]
 desc_rva = desc_va - imagebase
 ```
 
-#### Step 4 — verify
+#### Step 3 — cross-confirm via the BoundFuncDesc pointer table
 
-Must hold:
-
-- `methods[idx] == "Raycast"`
-- `len(table) == len(methods)` (or explain a tiny mismatch)
-- Only **one** static qword in the image points at `desc_va` (optional `bin_search` of the 8-byte VA) — usually the table slot itself
-- Peek `desc_va` bytes: often uninitialized on disk → **expected**, not a failure
+Search for the 8-byte little-endian pointer to `desc_va` (use `find_bytes` with the reversed bytes). The hit is inside a run of consecutive desc pointers in `.rdata` — that is the BoundFuncDesc pointer table, and it should align with the WorldRoot method-name table order (Raycast index matches).
 
 Optional live check (debugger attached or external RPM):
 
 ```text
-name = cstr(*(desc_va + 0x8))   # should be "Raycast" when initialized
-fn   = *(desc_va + 0x80)        # should be executable code
+name = read_string(*(desc_va + 0x8))   # should be "Raycast" when initialized
+fn   = *(desc_va + 0x80)               # should be executable code
 ```
 
 If live name/fn work, set `RaycastBoundFn` to the working offset (`0x80` preferred among `0x78/0x80/0x88/...`).
 
-#### Step 5 — write offsets
+#### Step 4 — write offsets
 
 Update only:
 
@@ -421,12 +372,12 @@ namespace ManualOffsets
 
 Do not change unrelated offsets "just in case".
 
-### Path C — if static tables moved (fallback)
+### If static registration is unavailable (fallback)
 
-If after an update Steps 2–3 fail:
+If after an update the registration xref or pointer-table scan fails:
 
 1. Re-check exact strings and that the IDB matches the running build.
-2. Widen the backward scan / relax the high-RVA threshold slightly; re-require `Raycast` + `FindPartOnRay` anchors.
+2. Widen the pointer-table scan / relax the high-RVA threshold slightly; re-require `Raycast` + `FindPartOnRay` anchors.
 3. **Runtime scan** (most reliable fallback):
    - In the live `RobloxPlayerBeta.exe` module, walk candidate desc VAs (from any remaining pointer tables, or known desc region).
    - Accept VA where `read_string(*(va+8)) == "Raycast"` and `*(va+0x80)` points to RX code.
@@ -444,16 +395,81 @@ Do not ship an offset that was only "nearby" a wrong xref (e.g. reflection dumps
 | Hardcode old RVA and "search near it" | Region moves every update |
 | Confuse `FindPartOnRay` desc with `Raycast` | Different indices in the same tables |
 | Change `RaycastBoundFn` without live proof | Keep `0x80` unless validated |
+| Use the name string address as the desc | `"Raycast"` sits in `.rdata`, not the desc |
 
-### Minimal `py_eval` checklist (copy for the model)
+### Practical IDA MCP tips (learned the hard way)
 
-```text
-1. imagebase
-2. exact strings: WorldRoot, Raycast, FindPartOnRay
-3. longest (WorldRoot, MethodName)* table containing Raycast + FindPartOnRay
-4. idx = index of Raycast
-5. consecutive high-.data pointer run before FindPartOnRay strings, length == methods
-6. desc_rva = table[idx] - imagebase
-7. RaycastBoundFn = 0x80 (live-confirm if possible)
-8. print manual_offsets.cs lines only when steps 3–6 succeeded
-```
+These are real gotchas hit while re-finding the offsets on the current build. They save a lot of
+time on the next update.
+
+1. **`find` with `type: "string"` returns substring matches too.** Searching `"Raycast"` returns
+   ~70 hits (e.g. `RaycastCachedTerrain`, `raycastParams`, `findPartOnRay`). Always confirm the
+   exact string with `get_string` on the candidate address before trusting it. The exact
+   `"Raycast"` method name is the one whose neighbors are `Spherecast` / `FindPartOnRay` /
+   `Blockcast` in the same `.rdata` cluster.
+
+2. **`xrefs_to` on a string can return 0 hits even though code references it.** On this build the
+   `"Raycast"` string had exactly one xref (`0x142590e79`), but the btools strings
+   (`"currentCommand"`, `"MouseCommand] Workspace::Process"`) returned **zero** xrefs — they are
+   referenced via RIP-relative `lea` in code that IDA hadn't auto-created xrefs for. Don't
+   conclude "string unused" from an empty xref list; fall back to `find_bytes` on the 8-byte
+   little-endian pointer (or the 4-byte RVA) to locate references.
+
+3. **`py_eval` loops over the whole image time out.** Iterating every byte of `.text`
+   (0x140001000–0x145ec0000) with `idc.next_head` / `ida_ua.decode_insn` exceeds the MCP
+   request timeout. Scope scans to a small window (e.g. `0x146c00000–0x146c10000`) or use the
+   native `find_bytes` tool instead of a Python byte-walk.
+
+4. **`find_bytes` is the fastest way to confirm a pointer table.** To verify a desc address
+   `0x1481E7150` is in the BoundFuncDesc pointer table, search for its little-endian bytes
+   `50 71 1E 48 01 00 00 00`. One hit in `.rdata` inside a run of consecutive desc pointers =
+   confirmed. This is much faster and more reliable than a Python scan.
+
+5. **The desc body is all zeros in the static file — that's expected.** `get_bytes` on
+   `0x1481E7150` returns 160 zero bytes. The name (`+8`) and fn pointer (`+0x80`) are filled at
+   runtime. Do not treat this as a failure; the registration function's writes are the proof.
+
+6. **Cross-check against the auto-generated reference headers.** The repo's parent directory
+   contains `raycast_offsets.hpp` / `offsets.hpp` auto-generated for the exact build
+   (`version-d584fb6c717a43d9`). They independently confirm `RaycastBoundDesc = 0x81E7150` and
+   `RaycastBoundFn = 0x80`. If your IDA result matches the reference header, you're done.
+
+7. **`server_health` can time out while IDA is busy.** If the first `server_health` call times
+   out, retry — a `py_eval` (e.g. `print(hex(ida_nalt.get_imagebase()))`) often succeeds and
+   confirms the server is alive.
+
+---
+
+## Btools Offsets Reference
+
+| Offset | Class | Description | Current Value |
+|---|---|---|---|
+| `WorkspaceCurrentCommand` | `Workspace` | currentCommand shared_ptr ptr | `0x868` |
+| `WorkspaceCurrentRefCount` | `Workspace` | currentCommand shared_ptr ctrl | `0x870` |
+| `WorkspaceStickyCommand` | `Workspace` | stickyCommand shared_ptr ptr | `0x878` |
+| `WorkspaceStickyRefCount` | `Workspace` | stickyCommand shared_ptr ctrl | `0x880` |
+| `MouseCommandWorkspace` | `MouseCommand` | Back-pointer to `Workspace` | `0x50` |
+| `ToolAllocationSize` | — | Allocation size for Hammer/Grab/Clone tools | `0xD0` |
+
+---
+
+## Updating Offsets After a Roblox Update
+
+When Roblox updates, these offsets may change. To re-find them:
+
+1. **Load the new `RobloxPlayerBeta.exe` into IDA Pro.**
+2. Find the btools offsets as described in the [Btools Offsets — Step by Step](#btools-offsets--step-by-step) section.
+3. Find the RaycastBoundDesc as described in the [MCP Guide](#mcp-guide-finding-raycastbounddesc) section.
+4. Update the values in `manual_offsets.cs`.
+5. Rebuild and test the affected features.
+
+---
+
+## Adding New Offsets
+
+To add a new manual offset:
+
+1. Add a new `public static class` (or add to an existing one) in `manual_offsets.cs`.
+2. Add `public const long` (or `public const int`) fields for each offset.
+3. Reference them via `ManualOffsets.ClassName.OffsetName` in feature code.
+4. Document how the offset was found in this tutorial so it can be re-found after updates.

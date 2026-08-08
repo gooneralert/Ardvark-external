@@ -462,7 +462,9 @@ namespace FoulzExternal
             catch { }
         }
 
-        private async Task fixit(Memory m)
+        private Task fixit(Memory m) => Task.Run(() => fixitSync(m));
+
+        private void fixitSync(Memory m)
         {
             try
             {
@@ -475,36 +477,12 @@ namespace FoulzExternal
                 {
                     if (!string.IsNullOrEmpty(Storage.LocalPlayerName))
                         Dispatcher.Invoke(() => { try { ProfileNameText.Text = Storage.LocalPlayerName; } catch { } });
-
-                    var url = await handler.GetAvatarHeadshotUrlAsync(Storage.LocalPlayerUserId);
-                    if (!string.IsNullOrEmpty(url))
-                    {
-                        byte[]? data = null;
-                        try { using (var hc = new HttpClient()) data = await hc.GetByteArrayAsync(url); } catch { }
-
-                        if (data != null && data.Length > 0)
-                        {
-                            Dispatcher.Invoke(() =>
-                            {
-                                try
-                                {
-                                    using (var ms = new System.IO.MemoryStream(data))
-                                    {
-                                        var bmp = new BitmapImage();
-                                        bmp.BeginInit();
-                                        bmp.CacheOption = BitmapCacheOption.OnLoad;
-                                        bmp.StreamSource = ms;
-                                        bmp.EndInit();
-                                        bmp.Freeze();
-                                        ProfileEllipse.Fill = new ImageBrush(bmp) { Stretch = Stretch.UniformToFill };
-                                    }
-                                }
-                                catch { }
-                            });
-                        }
-                    }
                 }
                 catch { }
+
+                // Kick off the avatar image load in the background so it never
+                // blocks the attach path (network calls can hang for seconds).
+                _ = LoadAvatarAsync(Storage.LocalPlayerUserId);
 
                 Dispatcher.Invoke(() =>
                 {
@@ -560,6 +538,40 @@ namespace FoulzExternal
                 }
             }
             catch { Dispatcher.Invoke(() => { StatusText.Text = "ERROR"; }); }
+        }
+
+        // ── Background avatar image load (never blocks attach) ────
+        private async Task LoadAvatarAsync(long userId)
+        {
+            try
+            {
+                var url = await handler.GetAvatarHeadshotUrlAsync(userId);
+                if (string.IsNullOrEmpty(url)) return;
+
+                byte[]? data = null;
+                try { using (var hc = new HttpClient()) data = await hc.GetByteArrayAsync(url); } catch { }
+
+                if (data == null || data.Length == 0) return;
+
+                Dispatcher.Invoke(() =>
+                {
+                    try
+                    {
+                        using (var ms = new System.IO.MemoryStream(data))
+                        {
+                            var bmp = new BitmapImage();
+                            bmp.BeginInit();
+                            bmp.CacheOption = BitmapCacheOption.OnLoad;
+                            bmp.StreamSource = ms;
+                            bmp.EndInit();
+                            bmp.Freeze();
+                            ProfileEllipse.Fill = new ImageBrush(bmp) { Stretch = Stretch.UniformToFill };
+                        }
+                    }
+                    catch { }
+                });
+            }
+            catch { }
         }
 
         private void aimbottgl(object sender, RoutedEventArgs e) { if (_shutup || !(sender is ToggleButton tb)) return; tb.Content = tb.IsChecked == true ? "ON" : "OFF"; Options.Settings.Aiming.Aimbot = tb.IsChecked == true; }

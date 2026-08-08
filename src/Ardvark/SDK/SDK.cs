@@ -84,8 +84,9 @@ namespace FoulzExternal.SDK
 
         public string GetName()
         {
-            long nameAddy = Mem.ReadPtr(Address + Offsets.Instance.Name);
-            return FetchString(nameAddy);
+            long nameContainer = Mem.ReadPtr(Address + Offsets.Instance.NameContainer);
+            if (nameContainer <= 0x1000) return "invalid_str";
+            return FetchString(nameContainer + Offsets.Instance.Name);
         }
 
         public string GetDisplayName()
@@ -318,18 +319,17 @@ namespace FoulzExternal.SDK
         {
             try
             {
-                Process[] all = Process.GetProcesses();
-                foreach (var p in all)
+                // Fast path: use the already-attached process's module path.
+                if (Mem != null && Mem.ProcessId != 0)
                 {
                     try
                     {
+                        using var p = Process.GetProcessById(Mem.ProcessId);
                         var module = p.MainModule;
-                        if (module == null) continue;
-                        if (Mem != null && Mem.Base != 0 && module.BaseAddress.ToInt64() == Mem.Base)
+                        if (module != null)
                         {
                             string? dir = Path.GetDirectoryName(module.FileName);
-                            if (string.IsNullOrEmpty(dir)) return "";
-                            return Path.GetFileName(dir);
+                            if (!string.IsNullOrEmpty(dir)) return Path.GetFileName(dir);
                         }
                     }
                     catch { }

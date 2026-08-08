@@ -40,6 +40,8 @@ namespace FoulzExternal
 
         public IntPtr Handle;
         public long Base;
+        public int ProcessId;
+        public int ModuleSize;
 
 
         public bool Attach(string n)
@@ -50,6 +52,9 @@ namespace FoulzExternal
             Process p = ps[0];
             Handle = OpenProcess(0x1F0FFF, false, p.Id);
             Base = p.MainModule?.BaseAddress.ToInt64() ?? 0;
+            ProcessId = p.Id;
+
+            try { ModuleSize = p.MainModule?.ModuleMemorySize ?? 0; } catch { ModuleSize = 0; }
 
             _r = (SFn)Marshal.GetDelegateForFunctionPointer(v("NtReadVirtualMemory"), typeof(SFn));
             _w = (SFn)Marshal.GetDelegateForFunctionPointer(v("NtWriteVirtualMemory"), typeof(SFn));

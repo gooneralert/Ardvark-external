@@ -84,22 +84,9 @@ namespace FoulzExternal.storage
                 }
                 catch { PlaceId = 0; GameId = 0; }
 
-                ModuleSize = 0;
-                ProcessId = 0;
-                foreach (var p in Process.GetProcesses())
-                {
-                    try
-                    {
-                        var main = p.MainModule;
-                        if (main != null && main.BaseAddress.ToInt64() == BaseAddress)
-                        {
-                            ModuleSize = main.ModuleMemorySize;
-                            ProcessId = p.Id;
-                            break;
-                        }
-                    }
-                    catch { }
-                }
+                // Use PID/ModuleSize captured during Attach instead of scanning all processes.
+                ModuleSize = m.ModuleSize;
+                ProcessId = m.ProcessId;
 
                 try
                 {

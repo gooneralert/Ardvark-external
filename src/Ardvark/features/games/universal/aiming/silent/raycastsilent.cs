@@ -463,6 +463,14 @@ namespace FoulzExternal.features.games.universal.aiming.silent
                    x == PAGE_EXECUTE_READWRITE || x == PAGE_EXECUTE_WRITECOPY;
         }
 
+        private static bool RegionExec(long a)
+        {
+            MEMORY_BASIC_INFORMATION mbi;
+            if (VirtualQueryEx(SDKInstance.Mem.Handle, (IntPtr)a, out mbi, (UIntPtr)Marshal.SizeOf<MEMORY_BASIC_INFORMATION>()) == 0)
+                return false;
+            return mbi.State == MEM_COMMIT && IsExecutableProtect(mbi.Protect);
+        }
+
         private static int PageSize()
         {
             return 0x1000;
@@ -886,7 +894,7 @@ namespace FoulzExternal.features.games.universal.aiming.silent
             GCHandle h = GCHandle.Alloc(bytes, GCHandleType.Pinned);
             try
             {
-                return (T)Marshal.PtrToStructure(h.AddrOfPinnedObject(), typeof(T));
+                return Marshal.PtrToStructure<T>(h.AddrOfPinnedObject());
             }
             finally
             {
@@ -1048,10 +1056,26 @@ namespace FoulzExternal.features.games.universal.aiming.silent
             long slot = baseAddr + DescRva + BoundFnOffset;
             long fn = SDKInstance.Mem.ReadPtr(slot);
 
-            if (!OkAddr(fn))
+            if (!OkAddr(fn) || !RegionExec(fn))
             {
                 g_lastFail = now;
                 return false;
+            }
+
+            // Re-hook fast path (mirrors the C++ reference): if we already have a
+            // thunk+state for this exact original function, just re-mark CFG and
+            // re-patch the slot instead of building a brand new stub each time.
+            if (g_hook.thunk != 0 && g_hook.state != 0 && g_hook.originalFunction == fn)
+            {
+                MarkCfg(g_hook.thunk);
+                if (WriteProtected(slot, BitConverter.GetBytes(g_hook.thunk)) &&
+                    SDKInstance.Mem.ReadPtr(slot) == g_hook.thunk)
+                {
+                    g_hook.moduleBase = baseAddr;
+                    g_hook.installed = true;
+                    DeactivateState();
+                    return true;
+                }
             }
 
             if (g_hook.state == 0) g_hook.state = SDKInstance.Mem.Allocate(PageSize());
@@ -1109,8 +1133,9 @@ namespace FoulzExternal.features.games.universal.aiming.silent
                 return false;
             }
 
-            // Write empty state
+            // Write empty state (scale must be 1.15 — the thunk multiplies by it)
             RaycastState empty = new RaycastState();
+            empty.scale = 1.15f;
             byte[] stateBytes = StructureToBytes(empty);
             if (!WMem(g_hook.state, stateBytes))
             {
@@ -1152,13 +1177,25 @@ namespace FoulzExternal.features.games.universal.aiming.silent
             return true;
         }
 
+        private static void DeactivateState()
+        {
+            if (g_hook.state == 0) return;
+            uint v = 0;
+            WMem(g_hook.state, BitConverter.GetBytes(v));
+        }
+
         public static void Remove()
         {
             if (g_hook.installed && OkAddr(g_hook.originalFunction) && g_hook.moduleBase != 0)
             {
                 long slot = g_hook.moduleBase + DescRva + BoundFnOffset;
-                byte[] origBytes = BitConverter.GetBytes(g_hook.originalFunction);
-                WriteProtected(slot, origBytes);
+                // Only restore if our thunk is still in the slot (prevents
+                // clobbering a re-registered pointer after a map change).
+                if (SDKInstance.Mem.ReadPtr(slot) == g_hook.thunk)
+                {
+                    byte[] origBytes = BitConverter.GetBytes(g_hook.originalFunction);
+                    WriteProtected(slot, origBytes);
+                }
             }
 
             if (g_hook.thunk != 0 && !g_hook.thunkOwned)
@@ -1184,6 +1221,7 @@ namespace FoulzExternal.features.games.universal.aiming.silent
         }
 
         private static long s_lastBase = 0;
+        private static DateTime s_lastSlotCheck = DateTime.MinValue;
 
         public static void Ensure(bool want)
         {
@@ -1198,6 +1236,25 @@ namespace FoulzExternal.features.games.universal.aiming.silent
             if (want)
             {
                 if (baseAddr == 0) return;
+
+                // Periodically verify our thunk is still in the slot (mirrors the
+                // C++ reference's slot re-check). If something overwrote it, the
+                // hook is no longer valid and must be reinstalled.
+                if (g_hook.installed && g_hook.thunk != 0)
+                {
+                    var now = DateTime.Now;
+                    if (s_lastSlotCheck == DateTime.MinValue ||
+                        (now - s_lastSlotCheck).TotalMilliseconds >= 250)
+                    {
+                        s_lastSlotCheck = now;
+                        if (SDKInstance.Mem.ReadPtr(baseAddr + DescRva + BoundFnOffset) != g_hook.thunk)
+                        {
+                            g_hook.installed = false;
+                            g_hook.moduleBase = 0;
+                        }
+                    }
+                }
+
                 if (!g_hook.installed) Install();
             }
             else if (g_hook.installed)
