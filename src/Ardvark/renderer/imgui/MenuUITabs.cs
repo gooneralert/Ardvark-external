@@ -948,29 +948,47 @@ namespace IMGUI
             BeginPanelContent(leftMin, leftMax, out float ll, out float lr, out float lt, out float lb);
             float y = lt;
 
-            // Script combo
+            // ── Script selector (Yerba-styled: dark pill + prev/next action buttons)
             if (scriptItems.Length == 0) RefreshScriptList();
             string[] items = scriptItems.Length == 0 ? new[] { "(no scripts)" } : scriptItems;
-            ImGui.SetCursorScreenPos(new Vector2(ll + YerbaLayout.SettingLabelPad, y));
-            ImGui.SetNextItemWidth(lr - ll - YerbaLayout.SettingLabelPad * 2f - 30f);
-            if (ImGui.Combo("##script", ref scriptSel, items, items.Length))
+            int sel = Math.Clamp(scriptSel, 0, items.Length - 1);
+            string curName = sel >= 0 && sel < items.Length ? items[sel] : "(no scripts)";
+
+            float selW = lr - ll - YerbaLayout.SettingLabelPad * 2f - 74f;
+            var selMin = new Vector2(ll + YerbaLayout.SettingLabelPad, y);
+            var selMax = new Vector2(selMin.X + selW, y + YerbaLayout.ConfigInputH);
+
+            dl.AddRectFilled(selMin, selMax, YerbaColors.ConfigInputBg, YerbaLayout.ConfigInputRound);
+            YerbaWidgets.DrawFieldOutline(dl, selMin, selMax, YerbaColors.ConfigInputBorder, YerbaLayout.ConfigInputRound, YerbaLayout.ConfigInputOutline);
+
+            var selTextSize = ImGui.CalcTextSize(curName);
+            dl.AddText(new Vector2(selMin.X + YerbaLayout.ConfigInputPad,
+                (selMin.Y + selMax.Y) * 0.5f - selTextSize.Y * 0.5f), YerbaColors.TextActive, curName);
+
+            var prevMin = new Vector2(selMax.X + 6f, y);
+            var prevMax = new Vector2(prevMin.X + 34f, y + YerbaLayout.ConfigInputH);
+            if (YerbaWidgets.ActionButton(prevMin, prevMax, YerbaLayout.ConfigBtnRound, "<", YerbaLayout.ConfigBtnFont))
             {
-                if (scriptSel >= 0 && scriptSel < scriptItems.Length)
+                if (scriptItems.Length > 0)
                 {
-                    string path = System.IO.Path.Combine(ScriptEngine.ScriptsDir, scriptItems[scriptSel]);
-                    if (System.IO.File.Exists(path))
-                        scriptCode = System.IO.File.ReadAllText(path);
+                    scriptSel = (scriptSel - 1 + scriptItems.Length) % scriptItems.Length;
+                    LoadScriptFile(scriptItems[scriptSel]);
                 }
             }
-            ImGui.SameLine(0, 5f);
-            if (ImGui.Button("new", new Vector2(26, 22)))
+
+            var nextMin = new Vector2(prevMax.X + 6f, y);
+            var nextMax = new Vector2(nextMin.X + 34f, y + YerbaLayout.ConfigInputH);
+            if (YerbaWidgets.ActionButton(nextMin, nextMax, YerbaLayout.ConfigBtnRound, ">", YerbaLayout.ConfigBtnFont))
             {
-                scriptCode = "";
-                scriptSel = -1;
+                if (scriptItems.Length > 0)
+                {
+                    scriptSel = (scriptSel + 1) % scriptItems.Length;
+                    LoadScriptFile(scriptItems[scriptSel]);
+                }
             }
             y = NextRow(y);
 
-            // Run + Stop
+            // ── Run + Stop (Yerba action buttons)
             var runMin = new Vector2(ll + YerbaLayout.SettingLabelPad, y);
             var runMax = new Vector2(ll + YerbaLayout.SettingLabelPad + 90f, y + YerbaLayout.UnloadH);
             if (YerbaWidgets.ActionButton(runMin, runMax, YerbaLayout.UnloadRound, "RUN", YerbaLayout.SettingRowFont))
@@ -986,19 +1004,34 @@ namespace IMGUI
                 ScriptEngine.Stop();
             y = NextRow(y);
 
-            // Script editor (pared down - multiline input)
-            float editH = 140f;
+            // ── Script editor (dark bg + thin outline, transparent input)
+            float editH = 160f;
+            var editMin = new Vector2(ll + YerbaLayout.SettingLabelPad, y);
+            var editMax = new Vector2(lr - YerbaLayout.SettingControlPad, y + editH);
+
+            dl.AddRectFilled(editMin, editMax, YerbaColors.ConfigListBg, 6f);
+
             string codeBuffer = scriptCode;
             if (codeBuffer.Length > 1_000_000) codeBuffer = codeBuffer.Substring(0, 1_000_000);
-            ImGui.SetCursorScreenPos(new Vector2(ll + YerbaLayout.SettingLabelPad, y));
+            ImGui.SetCursorScreenPos(editMin);
+            ImGui.PushStyleVar(ImGuiStyleVar.FramePadding, Vector2.Zero);
+            ImGui.PushStyleColor(ImGuiCol.FrameBg, Vector4.Zero);
+            ImGui.PushStyleColor(ImGuiCol.FrameBgHovered, Vector4.Zero);
+            ImGui.PushStyleColor(ImGuiCol.FrameBgActive, Vector4.Zero);
+            ImGui.PushStyleColor(ImGuiCol.Border, Vector4.Zero);
+            ImGui.PushStyleColor(ImGuiCol.Text, new Vector4(0.85f, 0.87f, 0.9f, 1f));
+            ImGui.PushStyleColor(ImGuiCol.TextSelectedBg, new Vector4(0.2f, 0.35f, 0.45f, 0.4f));
             if (ImGui.InputTextMultiline("##code", ref codeBuffer, 1_000_000,
-                new Vector2(lr - ll - YerbaLayout.SettingControlPad, editH), ImGuiInputTextFlags.AllowTabInput))
+                new Vector2(editMax.X - editMin.X, editH), ImGuiInputTextFlags.AllowTabInput))
             {
                 scriptCode = codeBuffer;
             }
+            ImGui.PopStyleColor(6);
+            ImGui.PopStyleVar();
+            YerbaWidgets.DrawFieldOutline(dl, editMin, editMax, YerbaColors.ConfigListBorder, 6f, 0.5f);
             y += editH + YerbaLayout.ConfigRowGap;
 
-            // Console output
+            // ── Console output (same Yerba style)
             dl.AddText(new Vector2(ll + YerbaLayout.SettingLabelPad, y), YerbaColors.TextActive, "console");
             y += 20f;
 
@@ -1010,11 +1043,26 @@ namespace IMGUI
 
             string consoleBuffer = scriptOutput;
             if (consoleBuffer.Length > 100_000) consoleBuffer = consoleBuffer.Substring(Math.Max(0, consoleBuffer.Length - 100_000));
-            ImGui.SetCursorScreenPos(new Vector2(ll + YerbaLayout.SettingLabelPad, y));
+            float consoleH = 90f;
+            var consoleMin = new Vector2(ll + YerbaLayout.SettingLabelPad, y);
+            var consoleMax = new Vector2(lr - YerbaLayout.SettingControlPad, y + consoleH);
+
+            dl.AddRectFilled(consoleMin, consoleMax, YerbaColors.ConfigListBg, 6f);
+            ImGui.SetCursorScreenPos(consoleMin);
+            ImGui.PushStyleVar(ImGuiStyleVar.FramePadding, Vector2.Zero);
+            ImGui.PushStyleColor(ImGuiCol.FrameBg, Vector4.Zero);
+            ImGui.PushStyleColor(ImGuiCol.FrameBgHovered, Vector4.Zero);
+            ImGui.PushStyleColor(ImGuiCol.FrameBgActive, Vector4.Zero);
+            ImGui.PushStyleColor(ImGuiCol.Border, Vector4.Zero);
+            ImGui.PushStyleColor(ImGuiCol.Text, new Vector4(0.7f, 0.72f, 0.75f, 1f));
             ImGui.InputTextMultiline("##console", ref consoleBuffer, 100_000,
-                new Vector2(lr - ll - YerbaLayout.SettingControlPad, 80f), ImGuiInputTextFlags.ReadOnly);
+                new Vector2(consoleMax.X - consoleMin.X, consoleH), ImGuiInputTextFlags.ReadOnly);
+            ImGui.PopStyleColor(5);
+            ImGui.PopStyleVar();
+            YerbaWidgets.DrawFieldOutline(dl, consoleMin, consoleMax, YerbaColors.ConfigListBorder, 6f, 0.5f);
             scriptOutput = consoleBuffer;
 
+            // ── Right panel: players (Yerba-styled)
             DrawPanelShell(dl, rightMin, rightMax, "players");
             BeginPanelContent(rightMin, rightMax, out float rl, out float rr, out float rt, out float rb);
             float ry = rt + 8f;
@@ -1049,6 +1097,17 @@ namespace IMGUI
                 }
                 catch { }
             }
+        }
+
+        private static void LoadScriptFile(string fileName)
+        {
+            try
+            {
+                string path = System.IO.Path.Combine(ScriptEngine.ScriptsDir, fileName);
+                if (System.IO.File.Exists(path))
+                    scriptCode = System.IO.File.ReadAllText(path);
+            }
+            catch { }
         }
 
         private static void RefreshScriptList()
