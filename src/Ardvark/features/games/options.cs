@@ -35,6 +35,7 @@ namespace Options
     }
     public class Visuals
     {
+        public bool Enabled = false;   // master ESP toggle
         public bool BoxESP = false;
         public bool FilledBox = false;
         public bool Box = false;
@@ -66,6 +67,13 @@ namespace Options
         public bool HealthText = false;        // numeric health above bar
         public int BoxMode = 0;                // 0 = regular, 1 = corner-only
         public int TracerOrigin = 0;           // 0 bottom, 1 center, 2 mouse, 3 top
+
+        // ── Chams (non-engine overlay chams, ported from C++ external) ─────
+        public bool Chams = false;             // master chams toggle
+        public int ChamsMode = 1;              // 0 = solid box, 1 = shader, 2 = wireframe mesh-style
+        public int ChamsShaderStyle = 0;       // shader style index (0 = plasma scan)
+        public float ChamsFillAlpha = 0.5f;    // fill opacity (0..1)
+        public float ChamsOutlineAlpha = 1f;   // outline opacity (0..1)
 
         public Visuals()
         {

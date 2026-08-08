@@ -9,6 +9,8 @@ using System.Text;
 using System.Threading;
 using System.Diagnostics;
 using FoulzExternal.games.universal.aiming;
+using FoulzExternal.SDK;
+using FoulzExternal.storage;
 using System.Windows.Media;
 using FoulzExternal.features.games.universal.desync;
 using FoulzExternal.features.games.universal.aiming.silent;
@@ -46,10 +48,24 @@ namespace IMGUI
         public static float crosshairDotSize = 1.5f;
         public static uint crosshairColor = 0xFFFFFFFF;
 
-        // ── Overlay FPS (controls the render loop rate) ──────────────────────
-        public static float overlayFps = 60f;
-        private static readonly Stopwatch frameClock = Stopwatch.StartNew();
-        private static long lastFrameMs;
+        // ── Overlay FPS (config value; render loop is unthrottled like C++) ──
+        public static float overlayFps = 240f;
+
+        // ── Measured render FPS (for the on-screen counter) ─────────────────
+        private static readonly Stopwatch fpsClock = Stopwatch.StartNew();
+        private static int fpsFrameCount;
+        private static float measuredFps = 0f;
+        public static float MeasuredFps => measuredFps;
+        private static void TickFps()
+        {
+            fpsFrameCount++;
+            if (fpsClock.ElapsedMilliseconds >= 500)
+            {
+                measuredFps = fpsFrameCount * 1000f / (float)fpsClock.ElapsedMilliseconds;
+                fpsFrameCount = 0;
+                fpsClock.Restart();
+            }
+        }
 
         private static ExitEventHandler? onAppExit;
         private static EventHandler? onDispatcherShutdown;
@@ -61,6 +77,10 @@ namespace IMGUI
         [DllImport("user32.dll", CharSet = CharSet.Unicode)] private static extern IntPtr FindWindow(string? lpClassName, string? lpWindowName);
         [DllImport("user32.dll")] private static extern bool SetWindowPos(IntPtr hWnd, IntPtr after, int x, int y, int cx, int cy, uint flags);
         [DllImport("user32.dll")] private static extern bool PostMessage(IntPtr hWnd, uint msg, IntPtr wParam, IntPtr lParam);
+        // winmm.dll high-resolution timer: keeps the system-wide timer at 1ms
+        // granularity so the unthrottled render loop (Present(0,0) style) stays
+        // smooth regardless of Windows' default ~15.6ms timer resolution.
+        [DllImport("winmm.dll")] private static extern uint timeBeginPeriod(uint uMilliseconds);
         private const uint WM_CLOSE = 0x0010;
 
         protected override Task PostInitialized()
@@ -69,65 +89,57 @@ namespace IMGUI
             // VSync unless we disable it. With VSync off we throttle the loop
             // ourselves in Render() using the configurable overlay FPS.
             this.VSync = false;
+            // Enable 1ms timer resolution so the sleep-based FPS throttle in
+            // Render() can actually hit high frame rates (240fps) instead of
+            // being crushed to ~60fps by Windows' default ~15.6ms timer.
+            try { timeBeginPeriod(1); } catch { }
             return Task.CompletedTask;
         }
 
         protected override void Render()
         {
-            // Respect the configurable overlay FPS live so the Settings slider
-            // takes effect immediately.
-            int targetFps = (int)Math.Clamp(overlayFps, 1f, 240f);
-            long frameMs = 1000L / targetFps;
-            long now = frameClock.ElapsedMilliseconds;
-            long elapsed = now - lastFrameMs;
-            if (elapsed < frameMs)
+            // Measure the true render-loop throughput for the on-screen FPS
+            // counter in the top-right corner.
+            TickFps();
+
+            // ── Inline ESP render (ported from C++ Renderer::MainLoop) ──────
+            // The C++ external renders ESP directly on the render thread with
+            // an unthrottled Present(0,0) — no worker thread, no scene
+            // snapshots, no sleeps. We do the same here: read the view matrix
+            // and draw the ESP inline every frame.
+            try
             {
-                int sleep = (int)(frameMs - elapsed);
-                if (sleep > 1)
-                    Thread.Sleep(sleep - 1);
-                // spin-wait for the final ~1ms for precision
-                while (frameClock.ElapsedMilliseconds - lastFrameMs < frameMs) { }
-            }
-            lastFrameMs = frameClock.ElapsedMilliseconds;
-
-            var v = visuals.GetSceneSnapshot();
-            if (v != null)
-            {
-                var d = ImGui.GetBackgroundDrawList();
-
-                foreach (var b in v.boxes)
+                if (FoulzExternal.SDK.Instance.Mem != null && Storage.IsInitialized)
                 {
-                    var min = new Vector2((float)b.r.Left, (float)b.r.Top);
-                    var max = new Vector2((float)(b.r.Left + b.r.Width), (float)(b.r.Top + b.r.Height));
+                    var view = FoulzExternal.SDK.Instance.Mem.Read<FoulzExternal.SDK.structures.Matrix4>(
+                        Storage.VisualEngine + Offsets.VisualEngine.ViewMatrix);
 
-                    d.AddRectFilled(new Vector2(min.X + 1, min.Y + 1), new Vector2(max.X + 1, max.Y + 1), 0x30000000);
-                    if (b.f) d.AddRectFilled(min, max, 0x40000000);
-                    d.AddRect(min, max, 0xFFFFFFFF);
-                    d.AddRect(new Vector2(min.X + 1, min.Y + 1), new Vector2(max.X - 1, max.Y - 1), 0x80FFFFFF);
-                }
+                    var io = ImGui.GetIO();
+                    var viewport = new FoulzExternal.SDK.structures.Vector2
+                    {
+                        x = io.DisplaySize.X,
+                        y = io.DisplaySize.Y
+                    };
 
-                foreach (var l in v.lines)
-                    d.AddLine(new Vector2((float)l.a.X, (float)l.a.Y), new Vector2((float)l.b.X, (float)l.b.Y), u32(l.c), Math.Max(1.0f, (float)l.w));
-
-                foreach (var o in v.dots)
-                {
-                    var p = new Vector2((float)o.p.X, (float)o.p.Y);
-                    uint c = u32(o.c);
-                    d.AddCircleFilled(p, Math.Max(0.5f, (float)o.r - 1.0f), (c & 0x00FFFFFF) | 0x40000000);
-                    d.AddCircle(p, (float)o.r, c, 16, 1.0f);
-                }
-
-                foreach (var t in v.texts)
-                {
-                    var pos = new Vector2((float)t.p.X, (float)t.p.Y);
-                    uint c = u32(t.c);
-                    float w = Math.Max(30, t.t.Length * (float)t.s * 0.6f);
-                    float x = t.ctr ? pos.X - w / 2 : pos.X;
-
-                    d.AddRectFilled(new Vector2(x, pos.Y), new Vector2(x + w, pos.Y + (float)t.s + 6.0f), 0x60000000);
-                    d.AddText(new Vector2(x + 4, pos.Y + 3), c, t.t);
+                    visuals.RenderImGui(view, viewport);
                 }
             }
+            catch { }
+
+            // ── FPS counter (top-right) ─────────────────────────────────────
+            try
+            {
+                if (measuredFps > 0f)
+                {
+                    var dFps = ImGui.GetBackgroundDrawList();
+                    var ioFps = ImGui.GetIO();
+                    string fpsText = $"{measuredFps:0} fps";
+                    var fpsSize = ImGui.CalcTextSize(fpsText);
+                    var fpsPos = new Vector2(ioFps.DisplaySize.X - fpsSize.X - 10f, 8f);
+                    dFps.AddText(fpsPos, 0xFFFFFFFF, fpsText);
+                }
+            }
+            catch { }
 
             try
             {
@@ -191,12 +203,12 @@ namespace IMGUI
                                 {
                                     if (localObj.HumanoidRootPart.IsValid)
                                     {
-                                        var pos = FoulzExternal.games.universal.visuals.visuals.GetPos(localObj.HumanoidRootPart, localCache);
+                                        var pos = FoulzExternal.games.universal.visuals.visuals.GetPos(localObj.HumanoidRootPart, true);
                                         localWorld = $"HRP: {pos.x:0.00}, {pos.y:0.00}, {pos.z:0.00}";
                                     }
                                     else if (localObj.Humanoid.IsValid)
                                     {
-                                        var pos = FoulzExternal.games.universal.visuals.visuals.GetPos(localObj.Humanoid, localCache);
+                                        var pos = FoulzExternal.games.universal.visuals.visuals.GetPos(localObj.Humanoid, true);
                                         localWorld = $"Humanoid: {pos.x:0.00}, {pos.y:0.00}, {pos.z:0.00}";
                                     }
                                     else

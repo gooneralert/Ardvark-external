@@ -49,7 +49,7 @@ namespace FoulzExternal.features.games.universal.desync
                 if (guys == null) return new Vector3();
                 var localObj = System.Linq.Enumerable.FirstOrDefault(guys, x => x.address == lp.Address);
                 if (localObj.address == 0 || !localObj.HumanoidRootPart.IsValid) return new Vector3();
-                return visuals.GetPos(localObj.HumanoidRootPart, new System.Collections.Generic.Dictionary<long, long>());
+                return visuals.GetPos(localObj.HumanoidRootPart, true);
             }
             catch { return new Vector3(); }
         }

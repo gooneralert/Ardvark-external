@@ -285,11 +285,11 @@ namespace IMGUI
             BeginPanelContent(leftMin, leftMax, out float ll, out float lr, out float lt, out float lb);
             float y = lt;
 
-            DrawSettingRow(dl, ll, lr, y, "enabled", (a, b) => DrawCheckboxRight(dl, a, b, ref Settings.Visuals.BoxESP));
+            DrawSettingRow(dl, ll, lr, y, "enabled", (a, b) => DrawCheckboxRight(dl, a, b, ref Settings.Visuals.Enabled));
             y = NextRow(y);
             DrawSettingRow(dl, ll, lr, y, "draw local", (a, b) => DrawCheckboxRight(dl, a, b, ref Settings.Visuals.LocalPlayerESP));
             y = NextRow(y);
-            DrawSettingRow(dl, ll, lr, y, "bounding box", (a, b) => DrawCheckboxRight(dl, a, b, ref Settings.Visuals.Box));
+            DrawSettingRow(dl, ll, lr, y, "bounding box", (a, b) => DrawCheckboxRight(dl, a, b, ref Settings.Visuals.BoxESP));
             y = NextRow(y);
             DrawSettingRow(dl, ll, lr, y, "box fill", (a, b) => DrawCheckboxRight(dl, a, b, ref Settings.Visuals.FilledBox));
             y = NextRow(y);
@@ -311,6 +311,28 @@ namespace IMGUI
             y = NextRow(y);
             DrawSettingRow(dl, ll, lr, y, "health text", (a, b) => DrawCheckboxRight(dl, a, b, ref Settings.Visuals.HealthText));
             y = NextRow(y);
+
+            // ── Chams (non-engine overlay chams) ───────────────────────────
+            DrawSettingRow(dl, ll, lr, y, "chams", (a, b) => DrawCheckboxRight(dl, a, b, ref Settings.Visuals.Chams));
+            y = NextRow(y);
+            if (Settings.Visuals.Chams)
+            {
+                DrawSettingRow(dl, ll, lr, y, "chams mode", (a, b) =>
+                {
+                    int cm = Settings.Visuals.ChamsMode;
+                    if (YerbaWidgets.ActionButton(new Vector2(b.X - YerbaLayout.SettingControlPad - 90f, a.Y + 5f),
+                        new Vector2(b.X - YerbaLayout.SettingControlPad, b.Y - 5f), 5f, new[] { "solid", "shader", "wireframe" }[Math.Clamp(cm, 0, 2)], YerbaLayout.ConfigBtnFont))
+                    {
+                        cm = (cm + 1) % 3;
+                        Settings.Visuals.ChamsMode = cm;
+                    }
+                });
+                y = NextRow(y);
+                DrawSliderRow(dl, ll, lr, y, "chams fill alpha", ref Settings.Visuals.ChamsFillAlpha, 0f, 1f);
+                y = NextRow(y);
+                DrawSliderRow(dl, ll, lr, y, "chams outline alpha", ref Settings.Visuals.ChamsOutlineAlpha, 0f, 1f);
+                y = NextRow(y);
+            }
             DrawSettingRow(dl, ll, lr, y, "dead check", (a, b) => DrawCheckboxRight(dl, a, b, ref Settings.Visuals.DeadCheck));
             y = NextRow(y);
             DrawSettingRow(dl, ll, lr, y, "distance check", (a, b) => DrawCheckboxRight(dl, a, b, ref Settings.Visuals.DistanceCheck));
