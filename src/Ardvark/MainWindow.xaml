@@ -16,7 +16,7 @@
     <Window.Resources>
         <local:BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
 
-        <Color x:Key="AccentColor">#FFFF4FA3</Color>
+        <Color x:Key="AccentColor">#FF76D0F2</Color>
         <SolidColorBrush x:Key="AccentBrush" Color="{StaticResource AccentColor}"/>
 
         <Style x:Key="GlowClose" TargetType="Button">

@@ -1,0 +1,80 @@
+#include "ui/separator/header_separator.h"
+
+#include "ui/separator/gradient_separator.h"
+
+namespace menu::ui
+{
+    void draw_header_separator(ImDrawList* dl, const ImRect& bounds)
+    {
+        draw_gradient_separator(dl, bounds, true);
+    }
+}
+//https://discord.gg/dopamina
+////https://discord.gg/dopamina
+////https://discord.gg/dopamina
+////https://discord.gg/dopamina
+////https://discord.gg/dopamina
+////https://discord.gg/dopamina
+////https://discord.gg/dopamina
+////https://discord.gg/dopamina
+////https://discord.gg/dopamina
+////https://discord.gg/dopamina
+////https://discord.gg/dopamina
+////https://discord.gg/dopamina
+////https://discord.gg/dopamina
+////https://discord.gg/dopamina
+////https://discord.gg/dopamina
+////https://discord.gg/dopamina
+////https://discord.gg/dopamina
+////https://discord.gg/dopamina
+////https://discord.gg/dopamina
+////https://discord.gg/dopamina
+////https://discord.gg/dopamina
+////https://discord.gg/dopamina
+////https://discord.gg/dopamina
+////https://discord.gg/dopamina
+////https://discord.gg/dopamina
+////https://discord.gg/dopaminahttps://discord.gg/dopamina
+////https://discord.gg/dopamina
+////https://discord.gg/dopamina
+////https://discord.gg/dopamina
+////https://discord.gg/dopamina
+////https://discord.gg/dopamina
+////https://discord.gg/dopamina
+////https://discord.gg/dopamina
+////https://discord.gg/dopamina
+////https://discord.gg/dopamina
+////https://discord.gg/dopamina
+////https://discord.gg/dopamina
+////https://discord.gg/dopamina
+////https://discord.gg/dopamina
+////https://discord.gg/dopamina
+////https://discord.gg/dopamina
+////https://discord.gg/dopamina
+////https://discord.gg/dopamina
+////https://discord.gg/dopamina
+////https://discord.gg/dopamina
+////https://discord.gg/dopaminahttps://discord.gg/dopamina
+////https://discord.gg/dopamina
+////https://discord.gg/dopamina
+////https://discord.gg/dopamina
+////https://discord.gg/dopamina
+////https://discord.gg/dopamina
+////https://discord.gg/dopamina
+////https://discord.gg/dopamina
+////
+////https://discord.gg/dopaminahttps://discord.gg/dopamina
+////
+////https://discord.gg/dopamina
+////https://discord.gg/dopaminahttps://discord.gg/dopamina
+////https://discord.gg/dopamina
+////https://discord.gg/dopamina
+////https://discord.gg/dopamina
+////https://discord.gg/dopamina
+////https://discord.gg/dopamina
+////https://discord.gg/dopamina
+////https://discord.gg/dopamina
+////
+////https://discord.gg/dopamina
+////https://discord.gg/dopamina
+////https://discord.gg/dopaminahttps://discord.gg/dopamina

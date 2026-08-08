@@ -37,6 +37,15 @@ namespace IMGUI
 
         private static System.Windows.Threading.Dispatcher watcher = null!;
 
+        // ── Crosshair state (geeg lad style) ────────────────────────────────
+        public static bool crosshairEnabled;
+        public static float crosshairLength = 8f;
+        public static float crosshairGap = 4f;
+        public static float crosshairThickness = 1.5f;
+        public static bool crosshairDot;
+        public static float crosshairDotSize = 1.5f;
+        public static uint crosshairColor = 0xFFFFFFFF;
+
         private static ExitEventHandler? onAppExit;
         private static EventHandler? onDispatcherShutdown;
         private static EventHandler? onProcessExit;
@@ -206,6 +215,52 @@ namespace IMGUI
                         d3.AddCircleFilled(center, 3.0f, whiteOutline, 12);
                     }
                 }
+            }
+            catch { }
+
+            // ── Crosshair (geeg lad style) ────────────────────────────────────
+            try
+            {
+                if (crosshairEnabled)
+                {
+                    var io2 = ImGui.GetIO();
+                    var center = io2.MousePos;
+                    var dch = ImGui.GetForegroundDrawList();
+                    float len = crosshairLength;
+                    float gap = crosshairGap;
+                    float thick = crosshairThickness;
+                    uint col = crosshairColor;
+
+                    // 4 lines
+                    dch.AddLine(new Vector2(center.X - gap - len, center.Y), new Vector2(center.X - gap, center.Y), col, thick);
+                    dch.AddLine(new Vector2(center.X + gap, center.Y), new Vector2(center.X + gap + len, center.Y), col, thick);
+                    dch.AddLine(new Vector2(center.X, center.Y - gap - len), new Vector2(center.X, center.Y - gap), col, thick);
+                    dch.AddLine(new Vector2(center.X, center.Y + gap), new Vector2(center.X, center.Y + gap + len), col, thick);
+
+                    if (crosshairDot)
+                        dch.AddCircleFilled(center, crosshairDotSize, col, 12);
+                }
+            }
+            catch { }
+
+            // ── Yerba-style menu (main UI, same overlay as ESP) ───────────────
+            try
+            {
+                MenuUI.Render();
+            }
+            catch { }
+
+            // ── Debug console (Yerba-styled ImGui popup) ──────────────────────
+            try
+            {
+                DebugConsole.Render();
+            }
+            catch { }
+
+            // ── Dex Explorer (Yerba-styled ImGui popup) ───────────────────────
+            try
+            {
+                ExplorerWindow.Render();
             }
             catch { }
 
@@ -481,6 +536,10 @@ namespace IMGUI
                     System.Windows.Threading.Dispatcher.Run();
                 }
                 catch { }
+                finally
+                {
+                    lock (l) running = false;
+                }
             })
             { IsBackground = true }.Start();
         }
@@ -517,6 +576,13 @@ namespace IMGUI
 
         private static uint u32(System.Windows.Media.Color c) => (uint)((c.A << 24) | (c.B << 16) | (c.G << 8) | c.R);
 
-        public static void Main(string[] args) => new Program().Start().Wait();
+        // Single-overlay entry point. Uses start() so the static `running` guard
+        // is set — any later visuals.Start()/IMGUI.Program.start() from attach
+        // will return early instead of spawning a second overlay (which crashes).
+        public static void Main(string[] args)
+        {
+            start();
+            while (running) Thread.Sleep(100);
+        }
     }
 }

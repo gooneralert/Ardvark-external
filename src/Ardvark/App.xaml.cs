@@ -1,14 +1,15 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Configuration;
-using System.Data;
-using System.Linq;
-using System.Threading.Tasks;
 using System.Windows;
 
 namespace FoulzExternal
 {
     public partial class App : Application
     {
+        protected override void OnStartup(StartupEventArgs e)
+        {
+            base.OnStartup(e);
+            // The app now boots through IMGUI.Program (single overlay for
+            // menu + ESP) set as the StartupObject. Nothing else to do here.
+        }
     }
 }

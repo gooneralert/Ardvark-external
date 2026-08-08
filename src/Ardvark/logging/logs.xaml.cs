@@ -17,6 +17,12 @@ namespace FoulzExternal.logging
         private static readonly List<string> history = new List<string>();
         private DispatcherTimer? timer;
 
+        // Expose the log history for the ImGui debug console (new UI style).
+        public static IReadOnlyList<string> History
+        {
+            get { lock (safety) return history.ToArray(); }
+        }
+
         private static readonly TimeSpan delay = TimeSpan.FromSeconds(1);
         private static DateTime last_sent = DateTime.MinValue;
         private static readonly object safety = new object();

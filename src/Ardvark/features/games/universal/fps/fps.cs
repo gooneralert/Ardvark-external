@@ -59,7 +59,18 @@ namespace FoulzExternal.features.games.universal.fps
                             originalFps = SDKInstance.Mem.Read<double>(ptr + Offsets.TaskScheduler.MaxFPS);
                             valueWritten = true;
                         }
-                        SDKInstance.Mem.Write(ptr + Offsets.TaskScheduler.MaxFPS, 0.0);
+
+                        // Geeg-lad style: write the configured cap (0 = unlimited).
+                        // Roblox stores either a delay (0..1) or an fps value.
+                        double cur = SDKInstance.Mem.Read<double>(ptr + Offsets.TaskScheduler.MaxFPS);
+                        bool isDelay = cur > 0.0 && cur <= 1.0;
+                        double target = isDelay ? 0.0 : 0.0; // 0 = uncapped
+                        if (Settings.FPS.Value > 0f)
+                        {
+                            float cap = Settings.FPS.Value;
+                            target = isDelay ? (1.0 / cap) : cap;
+                        }
+                        SDKInstance.Mem.Write(ptr + Offsets.TaskScheduler.MaxFPS, target);
                     }
                     else
                     {

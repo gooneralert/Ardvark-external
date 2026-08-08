@@ -619,7 +619,27 @@ namespace FoulzExternal
 
         private void targetbone(object sender, SelectionChangedEventArgs e) { if (_shutup || TargetBoneCombo == null) return; Options.Settings.Aiming.TargetBone = TargetBoneCombo.SelectedIndex; }
 
-        private void startvibing(object sender, RoutedEventArgs e) { ((Storyboard)Resources["FadeInSequence"]).Begin(); settheme(Color.FromRgb(255, 79, 163)); }
+        private void startvibing(object sender, RoutedEventArgs e)
+        {
+            ((Storyboard)Resources["FadeInSequence"]).Begin();
+            settheme(Color.FromRgb(118, 208, 242));
+
+            // Auto-attach to Roblox on startup (retries until found).
+            try
+            {
+                var m = new Memory();
+                bool ok = m.Attach("RobloxPlayerBeta") || m.Attach("RobloxPlayer");
+                if (ok)
+                {
+                    _ = fixit(m);
+                }
+                else
+                {
+                    watchit();
+                }
+            }
+            catch { }
+        }
 
         private void bye(object sender, RoutedEventArgs e) { try { HumanoidModule.Stop(); CameraModule.Stop(); visuals.Stop(); TPHandler.Stop(); aiming.Stop(); desync.Stop(); flight.Stop(); fps.Stop(); gravity.Stop(); tickrate.Stop(); silentaiming.Stop(); raycastsilent.Stop(); phantomsilent.Stop(); btools.Stop(); IMGUI.Program.kill();} catch { } Application.Current.Shutdown(); }
 

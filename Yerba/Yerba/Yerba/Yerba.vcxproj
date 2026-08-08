@@ -1,0 +1,224 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <VCProjectVersion>17.0</VCProjectVersion>
+    <Keyword>Win32Proj</Keyword>
+    <ProjectGuid>{bf1db3a2-dd74-4beb-99d2-247e47827b0a}</ProjectGuid>
+    <RootNamespace>Yerba</RootNamespace>
+    <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v143</PlatformToolset>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v143</PlatformToolset>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v143</PlatformToolset>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v143</PlatformToolset>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Label="Shared">
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <TargetName>Yerba</TargetName>
+    <IntDir>.\src\thirdparty/obj</IntDir>
+    <OutDir>../build</OutDir>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;_CRT_SECURE_NO_WARNINGS;IMGUI_DEFINE_MATH_OPERATORS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ConformanceMode>true</ConformanceMode>
+      <AdditionalIncludeDirectories>$(ProjectDir)src;$(ProjectDir)src\framework;$(ProjectDir)src\thirdparty;$(ProjectDir)src\thirdparty\imgui;$(ProjectDir)src\thirdparty\stb;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <LanguageStandard>stdcpp17</LanguageStandard>
+    </ClCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalDependencies>d3d11.lib;dxgi.lib;dcomp.lib;d3dcompiler.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <EntryPointSymbol>mainCRTStartup</EntryPointSymbol>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;_CRT_SECURE_NO_WARNINGS;IMGUI_DEFINE_MATH_OPERATORS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ConformanceMode>true</ConformanceMode>
+      <AdditionalIncludeDirectories>$(ProjectDir)src;$(ProjectDir)src\framework;$(ProjectDir)src\thirdparty;$(ProjectDir)src\thirdparty\imgui;$(ProjectDir)src\thirdparty\stb;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <LanguageStandard>stdcpp17</LanguageStandard>
+    </ClCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+      <AdditionalDependencies>d3d11.lib;dxgi.lib;dcomp.lib;d3dcompiler.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <EntryPointSymbol>mainCRTStartup</EntryPointSymbol>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>_DEBUG;_CONSOLE;_CRT_SECURE_NO_WARNINGS;IMGUI_DEFINE_MATH_OPERATORS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ConformanceMode>true</ConformanceMode>
+      <AdditionalIncludeDirectories>$(ProjectDir)src;$(ProjectDir)src\framework;$(ProjectDir)src\thirdparty;$(ProjectDir)src\thirdparty\imgui;$(ProjectDir)src\thirdparty\stb;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <LanguageStandard>stdcpp17</LanguageStandard>
+    </ClCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalDependencies>d3d11.lib;dxgi.lib;dcomp.lib;d3dcompiler.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <EntryPointSymbol>mainCRTStartup</EntryPointSymbol>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>NDEBUG;_CONSOLE;_CRT_SECURE_NO_WARNINGS;IMGUI_DEFINE_MATH_OPERATORS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ConformanceMode>true</ConformanceMode>
+      <AdditionalIncludeDirectories>$(ProjectDir)src;$(ProjectDir)src\framework;$(ProjectDir)src\thirdparty;$(ProjectDir)src\thirdparty\imgui;$(ProjectDir)src\thirdparty\stb;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <LanguageStandard>stdcpp17</LanguageStandard>
+    </ClCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+      <AdditionalDependencies>d3d11.lib;dxgi.lib;dcomp.lib;d3dcompiler.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <EntryPointSymbol>mainCRTStartup</EntryPointSymbol>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClCompile Include="src\framework\app\device.cpp" />
+    <ClCompile Include="src\framework\app\main.cpp" />
+    <ClCompile Include="src\framework\app\window.cpp" />
+    <ClCompile Include="src\framework\core\fonts.cpp" />
+    <ClCompile Include="src\framework\core\logo.cpp" />
+    <ClCompile Include="src\framework\core\stb_impl.cpp" />
+    <ClCompile Include="src\framework\core\texture.cpp" />
+    <ClCompile Include="src\framework\data\fonts_data.cpp" />
+    <ClCompile Include="src\framework\ui\background\dot_pattern.cpp" />
+    <ClCompile Include="src\framework\ui\content\configs_panel.cpp" />
+    <ClCompile Include="src\framework\ui\content\content_panels.cpp" />
+    <ClCompile Include="src\framework\ui\content\settings_panel.cpp" />
+    <ClCompile Include="src\framework\ui\header\header_background.cpp" />
+    <ClCompile Include="src\framework\ui\header\header_bar.cpp" />
+    <ClCompile Include="src\framework\ui\separator\gradient_separator.cpp" />
+    <ClCompile Include="src\framework\ui\separator\header_separator.cpp" />
+    <ClCompile Include="src\framework\ui\shell\loader_shell.cpp" />
+    <ClCompile Include="src\framework\ui\shell\menu_shell.cpp" />
+    <ClCompile Include="src\framework\ui\shell\window_drag.cpp" />
+    <ClCompile Include="src\framework\ui\widgets\settings_widgets.cpp" />
+    <ClCompile Include="src\framework\ui\widgets\color_picker.cpp" />
+    <ClCompile Include="src\thirdparty\imgui\imgui.cpp" />
+    <ClCompile Include="src\thirdparty\imgui\imgui_demo.cpp" />
+    <ClCompile Include="src\thirdparty\imgui\imgui_draw.cpp" />
+    <ClCompile Include="src\thirdparty\imgui\imgui_impl_dx11.cpp" />
+    <ClCompile Include="src\thirdparty\imgui\imgui_impl_win32.cpp" />
+    <ClCompile Include="src\thirdparty\imgui\imgui_tables.cpp" />
+    <ClCompile Include="src\thirdparty\imgui\imgui_widgets.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="src\framework\app\device.h" />
+    <ClInclude Include="src\framework\app\window.h" />
+    <ClInclude Include="src\framework\config\layout.h" />
+    <ClInclude Include="src\framework\config\loader_layout.h" />
+    <ClInclude Include="src\framework\config\theme.h" />
+    <ClInclude Include="src\framework\core\fonts.h" />
+    <ClInclude Include="src\framework\core\logo.h" />
+    <ClInclude Include="src\framework\core\texture.h" />
+    <ClInclude Include="src\framework\data\fonts_data.h" />
+    <ClInclude Include="src\framework\data\icon_font_data.h" />
+    <ClInclude Include="src\framework\data\logoV2.h" />
+    <ClInclude Include="src\framework\ui\background\dot_pattern.h" />
+    <ClInclude Include="src\framework\ui\content\configs_panel.h" />
+    <ClInclude Include="src\framework\ui\content\configs_state.h" />
+    <ClInclude Include="src\framework\ui\content\content_panels.h" />
+    <ClInclude Include="src\framework\ui\content\settings_panel.h" />
+    <ClInclude Include="src\framework\ui\content\settings_state.h" />
+    <ClInclude Include="src\framework\ui\header\header_background.h" />
+    <ClInclude Include="src\framework\ui\header\header_bar.h" />
+    <ClInclude Include="src\framework\ui\separator\gradient_separator.h" />
+    <ClInclude Include="src\framework\ui\separator\header_separator.h" />
+    <ClInclude Include="src\framework\ui\shell\loader_shell.h" />
+    <ClInclude Include="src\framework\ui\shell\menu_shell.h" />
+    <ClInclude Include="src\framework\ui\shell\window_drag.h" />
+    <ClInclude Include="src\framework\ui\widgets\settings_widgets.h" />
+    <ClInclude Include="src\framework\ui\widgets\color_picker.h" />
+    <ClInclude Include="src\thirdparty\imgui\imconfig.h" />
+    <ClInclude Include="src\thirdparty\imgui\imgui.h" />
+    <ClInclude Include="src\thirdparty\imgui\imgui_impl_dx11.h" />
+    <ClInclude Include="src\thirdparty\imgui\imgui_impl_win32.h" />
+    <ClInclude Include="src\thirdparty\imgui\imgui_internal.h" />
+    <ClInclude Include="src\thirdparty\imgui\imstb_rectpack.h" />
+    <ClInclude Include="src\thirdparty\imgui\imstb_textedit.h" />
+    <ClInclude Include="src\thirdparty\imgui\imstb_truetype.h" />
+    <ClInclude Include="src\thirdparty\stb\stb_image.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="src\framework\icon\fontello.ttf" />
+    <None Include="src\framework\icon\logo.png" />
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>

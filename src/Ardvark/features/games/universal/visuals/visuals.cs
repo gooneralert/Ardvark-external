@@ -79,6 +79,14 @@ namespace FoulzExternal.games.universal.visuals
 
             while (isRunning)
             {
+                // External FPS throttle — controls how fast the visuals worker
+                // loop runs (Settings.FPS.Value = target FPS, 0 = unlimited).
+                float targetFps = Settings.FPS.Value;
+                if (targetFps > 0f)
+                {
+                    int sleepMs = (int)(1000f / Math.Clamp(targetFps, 1f, 1000f));
+                    if (sleepMs > 1) { Thread.Sleep(sleepMs - 1); }
+                }
                 if (++frameTick % 300 == 0) cache.Clear();
                 if (SDKInstance.Mem == null) { Thread.Sleep(50); continue; }
                 if (game == IntPtr.Zero || !IsWindow(game)) game = FindWindow(null, "Roblox");
@@ -180,9 +188,15 @@ namespace FoulzExternal.games.universal.visuals
                     var hrpPos = GetPos(hrpPart, cache);
                     var dist = (float)Math.Sqrt(Math.Pow(localPos.x - hrpPos.x, 2) + Math.Pow(localPos.z - hrpPos.z, 2));
 
+                    // geeg lad: distance check
+                    if (Settings.Visuals.DistanceCheck && dist > Settings.Visuals.MaxDistance) continue;
+
+                    // geeg lad: dead check (skip players with no HP left)
+                    if (Settings.Visuals.DeadCheck && p.MaxHealth > 0f && p.Health <= 0f) continue;
+
                     if (Settings.Visuals.BoxESP) next.boxes.Add(new Box { r = b, f = Settings.Visuals.FilledBox });
 
-                    if (Settings.Visuals.CornerESP)
+                    if (Settings.Visuals.CornerESP || Settings.Visuals.BoxMode == 1)
                     {
                         double th = b.Width / 4;
                         next.lines.Add(new Line { a = b.TopLeft, b = new Point(b.Left + th, b.Top), c = Colors.White, w = 1 });
@@ -204,6 +218,11 @@ namespace FoulzExternal.games.universal.visuals
 
                     if (Settings.Visuals.Name && !string.IsNullOrEmpty(p.Name))
                         next.texts.Add(new Text { t = p.Name, p = new Point(b.Left + b.Width / 2, b.Top - 15), c = Colors.White, s = Settings.Visuals.NameSize, ctr = true });
+
+                    // geeg lad: health text (numeric) above health bar / below name
+                    if (Settings.Visuals.HealthText && p.MaxHealth > 0f)
+                        next.texts.Add(new Text { t = $"{(int)p.Health}", p = new Point(b.Left - 18, b.Top), c = Colors.White, s = 10f, ctr = false });
+
                     if (Settings.Visuals.Distance) next.texts.Add(new Text { t = $"{(int)dist}m", p = new Point(b.Left + b.Width / 2, b.Bottom + 2), c = Colors.White, s = Settings.Visuals.DistanceSize, ctr = true });
 
                     // Show weapon name for PF
