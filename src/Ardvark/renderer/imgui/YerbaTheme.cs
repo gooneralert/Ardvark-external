@@ -9,8 +9,8 @@ namespace IMGUI
     // ────────────────────────────────────────────────────────────────────────
     public static class YerbaLayout
     {
-        public const float WindowW = 700f;
-        public const float WindowH = 560f;
+        public const float WindowW = 720f;
+        public const float WindowH = 830f;
 
         public const float OuterBorder = 0.5f;
         public const float IceBorder = 0.5f;

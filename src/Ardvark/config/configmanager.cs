@@ -78,6 +78,23 @@ namespace FoulzExternal.config
         public bool AnimatedFOV { get; set; }
         public float Range { get; set; } = 100f;
         public int TargetBone { get; set; }
+        public int AimPart { get; set; }
+        public int FOVType { get; set; }
+        public bool UseFOV { get; set; } = true;
+        public bool RangeCheck { get; set; }
+        public bool HealthCheck { get; set; }
+        public float HealthThreshold { get; set; }
+        public bool KnockCheck { get; set; }
+        public bool Autoswitch { get; set; }
+        public bool UnlockOnDeath { get; set; } = true;
+        public bool CamlockShake { get; set; }
+        public float CamlockShakeX { get; set; } = 1f;
+        public float CamlockShakeY { get; set; } = 1f;
+        public int SmoothingStyle { get; set; }
+        public float LinearSpeed { get; set; } = 5f;
+        public float QuadPower { get; set; } = 2f;
+        public float CubicSharpness { get; set; } = 3f;
+        public float SineMultiplier { get; set; } = 2f;
     }
 
     public class SilentConfig
@@ -101,7 +118,6 @@ namespace FoulzExternal.config
         public bool PFSwitchTeam { get; set; }
         public bool DownedCheck { get; set; }
         public bool TransparencyCheck { get; set; }
-        public bool WallCheck { get; set; }
     }
 
     public class NetworkConfig
@@ -278,7 +294,24 @@ namespace FoulzExternal.config
                     FillFOV = Settings.Aiming.FillFOV,
                     AnimatedFOV = Settings.Aiming.AnimatedFOV,
                     Range = Settings.Aiming.Range,
-                    TargetBone = Settings.Aiming.TargetBone
+                    TargetBone = Settings.Aiming.TargetBone,
+                    AimPart = Settings.Aiming.AimPart,
+                    FOVType = Settings.Aiming.FOVType,
+                    UseFOV = Settings.Aiming.UseFOV,
+                    RangeCheck = Settings.Aiming.RangeCheck,
+                    HealthCheck = Settings.Aiming.HealthCheck,
+                    HealthThreshold = Settings.Aiming.HealthThreshold,
+                    KnockCheck = Settings.Aiming.KnockCheck,
+                    Autoswitch = Settings.Aiming.Autoswitch,
+                    UnlockOnDeath = Settings.Aiming.UnlockOnDeath,
+                    CamlockShake = Settings.Aiming.CamlockShake,
+                    CamlockShakeX = Settings.Aiming.CamlockShakeX,
+                    CamlockShakeY = Settings.Aiming.CamlockShakeY,
+                    SmoothingStyle = Settings.Aiming.SmoothingStyle,
+                    LinearSpeed = Settings.Aiming.LinearSpeed,
+                    QuadPower = Settings.Aiming.QuadPower,
+                    CubicSharpness = Settings.Aiming.CubicSharpness,
+                    SineMultiplier = Settings.Aiming.SineMultiplier
                 },
                 Silent = new()
                 {
@@ -293,7 +326,7 @@ namespace FoulzExternal.config
                     PredictionX = Settings.Silent.PredictionX,
                     SFOV = Settings.Silent.SFOV
                 },
-                Checks = new() { TeamCheck = Settings.Checks.TeamCheck, PFTeamCheck = Settings.Checks.PFTeamCheck, PFSwitchTeam = Settings.Checks.PFSwitchTeam, DownedCheck = Settings.Checks.DownedCheck, TransparencyCheck = Settings.Checks.TransparencyCheck, WallCheck = Settings.Checks.WallCheck },
+                Checks = new() { TeamCheck = Settings.Checks.TeamCheck, PFTeamCheck = Settings.Checks.PFTeamCheck, PFSwitchTeam = Settings.Checks.PFSwitchTeam, DownedCheck = Settings.Checks.DownedCheck, TransparencyCheck = Settings.Checks.TransparencyCheck },
                 Network = new()
                 {
                     DeSyncBind = new() { Key = Settings.Network.DeSyncBind.Key, MouseButton = Settings.Network.DeSyncBind.MouseButton, ControllerButton = Settings.Network.DeSyncBind.ControllerButton, Waiting = Settings.Network.DeSyncBind.Waiting, Label = Settings.Network.DeSyncBind.Label },
@@ -368,6 +401,23 @@ namespace FoulzExternal.config
             Settings.Aiming.AnimatedFOV = c.Aiming.AnimatedFOV;
             Settings.Aiming.Range = c.Aiming.Range;
             Settings.Aiming.TargetBone = c.Aiming.TargetBone;
+            Settings.Aiming.AimPart = c.Aiming.AimPart;
+            Settings.Aiming.FOVType = c.Aiming.FOVType;
+            Settings.Aiming.UseFOV = c.Aiming.UseFOV;
+            Settings.Aiming.RangeCheck = c.Aiming.RangeCheck;
+            Settings.Aiming.HealthCheck = c.Aiming.HealthCheck;
+            Settings.Aiming.HealthThreshold = c.Aiming.HealthThreshold;
+            Settings.Aiming.KnockCheck = c.Aiming.KnockCheck;
+            Settings.Aiming.Autoswitch = c.Aiming.Autoswitch;
+            Settings.Aiming.UnlockOnDeath = c.Aiming.UnlockOnDeath;
+            Settings.Aiming.CamlockShake = c.Aiming.CamlockShake;
+            Settings.Aiming.CamlockShakeX = c.Aiming.CamlockShakeX;
+            Settings.Aiming.CamlockShakeY = c.Aiming.CamlockShakeY;
+            Settings.Aiming.SmoothingStyle = c.Aiming.SmoothingStyle;
+            Settings.Aiming.LinearSpeed = c.Aiming.LinearSpeed;
+            Settings.Aiming.QuadPower = c.Aiming.QuadPower;
+            Settings.Aiming.CubicSharpness = c.Aiming.CubicSharpness;
+            Settings.Aiming.SineMultiplier = c.Aiming.SineMultiplier;
 
             Settings.Silent.SilentAimbotKey.Key = c.Silent.SilentAimbotKey.Key;
             Settings.Silent.SilentAimbotKey.MouseButton = c.Silent.SilentAimbotKey.MouseButton;
@@ -388,7 +438,6 @@ namespace FoulzExternal.config
             Settings.Checks.PFSwitchTeam = c.Checks.PFSwitchTeam;
             Settings.Checks.DownedCheck = c.Checks.DownedCheck;
             Settings.Checks.TransparencyCheck = c.Checks.TransparencyCheck;
-            Settings.Checks.WallCheck = c.Checks.WallCheck;
 
             Settings.Network.DeSyncBind.Key = c.Network.DeSyncBind.Key;
             Settings.Network.DeSyncBind.MouseButton = c.Network.DeSyncBind.MouseButton;

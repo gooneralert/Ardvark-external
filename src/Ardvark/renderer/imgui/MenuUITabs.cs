@@ -161,7 +161,7 @@ namespace IMGUI
             {
                 int aimType = Settings.Aiming.AimingType;
                 if (YerbaWidgets.ActionButton(new Vector2(b.X - YerbaLayout.SettingControlPad - 90f, a.Y + 5f),
-                    new Vector2(b.X - YerbaLayout.SettingControlPad, b.Y - 5f), 5f, new[] { "mouse", "camera", "off" }[Math.Clamp(aimType, 0, 2)], YerbaLayout.ConfigBtnFont))
+                    new Vector2(b.X - YerbaLayout.SettingControlPad, b.Y - 5f), 5f, new[] { "camera", "mouse", "off" }[Math.Clamp(aimType, 0, 2)], YerbaLayout.ConfigBtnFont))
                 {
                     aimType = (aimType + 1) % 3;
                     Settings.Aiming.AimingType = aimType;
@@ -202,16 +202,75 @@ namespace IMGUI
             DrawSliderRow(dl, ll, lr, y, "max distance", ref Settings.Aiming.Range, 50f, 5000f);
             y = NextRow(y);
 
-            DrawSettingRow(dl, ll, lr, y, "target bone", (a, b) =>
+            // ── ported module settings ─────────────────────────────────────────
+            DrawSettingRow(dl, ll, lr, y, "toggle type", (a, b) =>
             {
-                int bone = Settings.Aiming.TargetBone;
+                int tt = Settings.Aiming.ToggleType;
                 if (YerbaWidgets.ActionButton(new Vector2(b.X - YerbaLayout.SettingControlPad - 90f, a.Y + 5f),
-                    new Vector2(b.X - YerbaLayout.SettingControlPad, b.Y - 5f), 5f, new[] { "head", "hrp", "torso", "l arm", "r arm" }[Math.Clamp(bone, 0, 4)], YerbaLayout.ConfigBtnFont))
+                    new Vector2(b.X - YerbaLayout.SettingControlPad, b.Y - 5f), 5f, new[] { "hold", "toggle" }[Math.Clamp(tt, 0, 1)], YerbaLayout.ConfigBtnFont))
                 {
-                    bone = (bone + 1) % 5;
-                    Settings.Aiming.TargetBone = bone;
+                    tt = (tt + 1) % 2;
+                    Settings.Aiming.ToggleType = tt;
                 }
             });
+            y = NextRow(y);
+
+            DrawSettingRow(dl, ll, lr, y, "aim part", (a, b) =>
+            {
+                int p = Settings.Aiming.AimPart;
+                if (YerbaWidgets.ActionButton(new Vector2(b.X - YerbaLayout.SettingControlPad - 90f, a.Y + 5f),
+                    new Vector2(b.X - YerbaLayout.SettingControlPad, b.Y - 5f), 5f, new[] { "head", "upper", "lower", "hrp", "cursor", "point", "calf" }[Math.Clamp(p, 0, 6)], YerbaLayout.ConfigBtnFont))
+                {
+                    p = (p + 1) % 7;
+                    Settings.Aiming.AimPart = p;
+                }
+            });
+            y = NextRow(y);
+
+            DrawSettingRow(dl, ll, lr, y, "fov anchor", (a, b) =>
+            {
+                int f = Settings.Aiming.FOVType;
+                if (YerbaWidgets.ActionButton(new Vector2(b.X - YerbaLayout.SettingControlPad - 90f, a.Y + 5f),
+                    new Vector2(b.X - YerbaLayout.SettingControlPad, b.Y - 5f), 5f, new[] { "cursor", "center" }[Math.Clamp(f, 0, 1)], YerbaLayout.ConfigBtnFont))
+                {
+                    f = (f + 1) % 2;
+                    Settings.Aiming.FOVType = f;
+                }
+            });
+            y = NextRow(y);
+
+            DrawSettingRow(dl, ll, lr, y, "easing", (a, b) =>
+            {
+                int e = Settings.Aiming.SmoothingStyle;
+                string[] names = { "linear", "speed", "quad-in", "quad-out", "quad-io", "cubic-in", "cubic-out", "cubic-io", "sine-out", "sine-in", "sine-io" };
+                if (YerbaWidgets.ActionButton(new Vector2(b.X - YerbaLayout.SettingControlPad - 90f, a.Y + 5f),
+                    new Vector2(b.X - YerbaLayout.SettingControlPad, b.Y - 5f), 5f, names[Math.Clamp(e, 0, 10)], YerbaLayout.ConfigBtnFont))
+                {
+                    e = (e + 1) % 11;
+                    Settings.Aiming.SmoothingStyle = e;
+                }
+            });
+            y = NextRow(y);
+
+            DrawSettingRow(dl, ll, lr, y, "use fov", (a, b) => DrawCheckboxRight(dl, a, b, ref Settings.Aiming.UseFOV));
+            y = NextRow(y);
+            DrawSettingRow(dl, ll, lr, y, "auto switch", (a, b) => DrawCheckboxRight(dl, a, b, ref Settings.Aiming.Autoswitch));
+            y = NextRow(y);
+            DrawSettingRow(dl, ll, lr, y, "unlock on death", (a, b) => DrawCheckboxRight(dl, a, b, ref Settings.Aiming.UnlockOnDeath));
+            y = NextRow(y);
+            DrawSettingRow(dl, ll, lr, y, "range check", (a, b) => DrawCheckboxRight(dl, a, b, ref Settings.Aiming.RangeCheck));
+            y = NextRow(y);
+            DrawSettingRow(dl, ll, lr, y, "health check", (a, b) => DrawCheckboxRight(dl, a, b, ref Settings.Aiming.HealthCheck));
+            y = NextRow(y);
+            DrawSettingRow(dl, ll, lr, y, "knock check", (a, b) => DrawCheckboxRight(dl, a, b, ref Settings.Aiming.KnockCheck));
+            y = NextRow(y);
+            DrawSettingRow(dl, ll, lr, y, "camera shake", (a, b) => DrawCheckboxRight(dl, a, b, ref Settings.Aiming.CamlockShake));
+            y = NextRow(y);
+            if (Settings.Aiming.CamlockShake)
+            {
+                DrawSliderRow(dl, ll, lr, y, "shake strength", ref Settings.Aiming.CamlockShakeX, 0f, 5f);
+                y = NextRow(y);
+            }
 
             // Right: silent aim
             DrawPanelShell(dl, rightMin, rightMax, "silent aim");
@@ -277,7 +336,6 @@ namespace IMGUI
         private static Vector4 espHeadColor = new(1, 1, 1, 1);
         private static Vector4 espTracerColor = new(0.75f, 0.82f, 1f, 1);
         private static Vector4 espChinaHatColor = new(1, 0.2f, 0.2f, 1);
-        private static Vector4 espCornerColor = new(0.75f, 0.82f, 1f, 1);
 
         private static void DrawVisualsTab(ImDrawListPtr dl, Vector2 leftMin, Vector2 leftMax, Vector2 rightMin, Vector2 rightMax)
         {
@@ -289,15 +347,23 @@ namespace IMGUI
             y = NextRow(y);
             DrawSettingRow(dl, ll, lr, y, "draw local", (a, b) => DrawCheckboxRight(dl, a, b, ref Settings.Visuals.LocalPlayerESP));
             y = NextRow(y);
+
+            // Box ESP — box config only appears once "bounding box" is toggled on
             DrawSettingRow(dl, ll, lr, y, "bounding box", (a, b) => DrawCheckboxRight(dl, a, b, ref Settings.Visuals.BoxESP));
             y = NextRow(y);
-            DrawSettingRow(dl, ll, lr, y, "box fill", (a, b) => DrawCheckboxRight(dl, a, b, ref Settings.Visuals.FilledBox));
-            y = NextRow(y);
+            if (Settings.Visuals.BoxESP)
+            {
+                DrawSettingRow(dl, ll, lr, y, "box fill", (a, b) => DrawCheckboxRight(dl, a, b, ref Settings.Visuals.FilledBox));
+                y = NextRow(y);
+            }
+
             DrawSettingRow(dl, ll, lr, y, "name", (a, b) => DrawCheckboxRight(dl, a, b, ref Settings.Visuals.Name));
             y = NextRow(y);
             DrawSettingRow(dl, ll, lr, y, "skeleton", (a, b) => DrawCheckboxRight(dl, a, b, ref Settings.Visuals.Skeleton));
             y = NextRow(y);
             DrawSettingRow(dl, ll, lr, y, "health bar", (a, b) => DrawCheckboxRight(dl, a, b, ref Settings.Visuals.Health));
+            y = NextRow(y);
+            DrawSettingRow(dl, ll, lr, y, "health text", (a, b) => DrawCheckboxRight(dl, a, b, ref Settings.Visuals.HealthText));
             y = NextRow(y);
             DrawSettingRow(dl, ll, lr, y, "distance", (a, b) => DrawCheckboxRight(dl, a, b, ref Settings.Visuals.Distance));
             y = NextRow(y);
@@ -307,93 +373,126 @@ namespace IMGUI
             y = NextRow(y);
             DrawSettingRow(dl, ll, lr, y, "china hat", (a, b) => DrawCheckboxRight(dl, a, b, ref Settings.Visuals.ChinaHat));
             y = NextRow(y);
-            DrawSettingRow(dl, ll, lr, y, "corner esp", (a, b) => DrawCheckboxRight(dl, a, b, ref Settings.Visuals.CornerESP));
-            y = NextRow(y);
-            DrawSettingRow(dl, ll, lr, y, "health text", (a, b) => DrawCheckboxRight(dl, a, b, ref Settings.Visuals.HealthText));
-            y = NextRow(y);
 
-            // ── Chams (non-engine overlay chams) ───────────────────────────
-            DrawSettingRow(dl, ll, lr, y, "chams", (a, b) => DrawCheckboxRight(dl, a, b, ref Settings.Visuals.Chams));
-            y = NextRow(y);
-            if (Settings.Visuals.Chams)
-            {
-                DrawSettingRow(dl, ll, lr, y, "chams mode", (a, b) =>
-                {
-                    int cm = Settings.Visuals.ChamsMode;
-                    if (YerbaWidgets.ActionButton(new Vector2(b.X - YerbaLayout.SettingControlPad - 90f, a.Y + 5f),
-                        new Vector2(b.X - YerbaLayout.SettingControlPad, b.Y - 5f), 5f, new[] { "solid", "shader", "wireframe" }[Math.Clamp(cm, 0, 2)], YerbaLayout.ConfigBtnFont))
-                    {
-                        cm = (cm + 1) % 3;
-                        Settings.Visuals.ChamsMode = cm;
-                    }
-                });
-                y = NextRow(y);
-                DrawSliderRow(dl, ll, lr, y, "chams fill alpha", ref Settings.Visuals.ChamsFillAlpha, 0f, 1f);
-                y = NextRow(y);
-                DrawSliderRow(dl, ll, lr, y, "chams outline alpha", ref Settings.Visuals.ChamsOutlineAlpha, 0f, 1f);
-                y = NextRow(y);
-            }
+            // Non-ESP filters
             DrawSettingRow(dl, ll, lr, y, "dead check", (a, b) => DrawCheckboxRight(dl, a, b, ref Settings.Visuals.DeadCheck));
             y = NextRow(y);
             DrawSettingRow(dl, ll, lr, y, "distance check", (a, b) => DrawCheckboxRight(dl, a, b, ref Settings.Visuals.DistanceCheck));
             y = NextRow(y);
-            if (Settings.Visuals.DistanceCheck)
-            {
-                DrawSliderRow(dl, ll, lr, y, "max distance", ref Settings.Visuals.MaxDistance, 50f, 5000f);
-                y = NextRow(y);
-            }
             DrawSettingRow(dl, ll, lr, y, "offscreen arrows", (a, b) => DrawCheckboxRight(dl, a, b, ref Settings.Visuals.OffscreenArrows));
             y = NextRow(y);
-            if (Settings.Visuals.OffscreenArrows)
-            {
-                DrawSliderRow(dl, ll, lr, y, "arrow size", ref Settings.Visuals.ArrowSize, 6f, 30f);
-                y = NextRow(y);
-                DrawSliderRow(dl, ll, lr, y, "arrow radius", ref Settings.Visuals.ArrowRadius, 40f, 400f);
-                y = NextRow(y);
-            }
-            DrawSettingRow(dl, ll, lr, y, "box mode", (a, b) =>
-            {
-                int mode = Settings.Visuals.BoxMode;
-                if (YerbaWidgets.ActionButton(new Vector2(b.X - YerbaLayout.SettingControlPad - 90f, a.Y + 5f),
-                    new Vector2(b.X - YerbaLayout.SettingControlPad, b.Y - 5f), 5f, mode == 0 ? "regular" : "corner", YerbaLayout.ConfigBtnFont))
-                {
-                    mode = (mode + 1) % 2;
-                    Settings.Visuals.BoxMode = mode;
-                }
-            });
 
+            // Chams — extra options pop up only after toggling chams on
+            DrawSettingRow(dl, ll, lr, y, "chams", (a, b) => DrawCheckboxRight(dl, a, b, ref Settings.Visuals.Chams));
+            y = NextRow(y);
+
+            // ── Right: per-feature settings, shown only when toggled on ───────
             DrawPanelShell(dl, rightMin, rightMax, "settings");
             BeginPanelContent(rightMin, rightMax, out float rl, out float rr, out float rt, out float rb);
             float ry = rt;
 
-            DrawSliderRow(dl, rl, rr, ry, "name size", ref Settings.Visuals.NameSize, 8f, 32f);
-            ry = NextRow(ry);
-            DrawSliderRow(dl, rl, rr, ry, "distance size", ref Settings.Visuals.DistanceSize, 8f, 32f);
-            ry = NextRow(ry);
-            DrawSliderRow(dl, rl, rr, ry, "tracer thickness", ref Settings.Visuals.TracerThickness, 0.5f, 6f);
-            ry = NextRow(ry);
-            DrawSliderRow(dl, rl, rr, ry, "head scale", ref Settings.Visuals.HeadCircleMaxScale, 0.5f, 4f);
-            ry = NextRow(ry);
+            if (Settings.Visuals.BoxESP)
+            {
+                DrawSettingRow(dl, rl, rr, ry, "box mode", (a, b) =>
+                {
+                    // box mode: only the regular bounding box remains (corner ESP removed)
+                    Settings.Visuals.BoxMode = 0;
+                    _ = YerbaWidgets.ActionButton(new Vector2(b.X - YerbaLayout.SettingControlPad - 90f, a.Y + 5f),
+                        new Vector2(b.X - YerbaLayout.SettingControlPad, b.Y - 5f), 5f, "regular", YerbaLayout.ConfigBtnFont);
+                });
+                ry = NextRow(ry);
+                DrawColorRow(dl, rl, rr, ry, "box color", ref espBoxColor);
+                ry = NextRow(ry);
+                if (Settings.Visuals.FilledBox)
+                {
+                    DrawColorRow(dl, rl, rr, ry, "box fill color", ref espBoxFillColor);
+                    ry = NextRow(ry);
+                }
+            }
 
-            DrawColorRow(dl, rl, rr, ry, "box color", ref espBoxColor);
-            ry = NextRow(ry);
-            DrawColorRow(dl, rl, rr, ry, "box fill color", ref espBoxFillColor);
-            ry = NextRow(ry);
-            DrawColorRow(dl, rl, rr, ry, "name color", ref espNameColor);
-            ry = NextRow(ry);
-            DrawColorRow(dl, rl, rr, ry, "skeleton color", ref espSkeletonColor);
-            ry = NextRow(ry);
-            DrawColorRow(dl, rl, rr, ry, "health color", ref espHealthColor);
-            ry = NextRow(ry);
-            DrawColorRow(dl, rl, rr, ry, "distance color", ref espDistanceColor);
-            ry = NextRow(ry);
-            DrawColorRow(dl, rl, rr, ry, "head color", ref espHeadColor);
-            ry = NextRow(ry);
-            DrawColorRow(dl, rl, rr, ry, "tracer color", ref espTracerColor);
-            ry = NextRow(ry);
-            DrawColorRow(dl, rl, rr, ry, "china hat color", ref espChinaHatColor);
-            ry = NextRow(ry);
-            DrawColorRow(dl, rl, rr, ry, "corner color", ref espCornerColor);
+            if (Settings.Visuals.Name)
+            {
+                DrawColorRow(dl, rl, rr, ry, "name color", ref espNameColor);
+                ry = NextRow(ry);
+                DrawSliderRow(dl, rl, rr, ry, "name size", ref Settings.Visuals.NameSize, 8f, 32f);
+                ry = NextRow(ry);
+            }
+
+            if (Settings.Visuals.Skeleton)
+            {
+                DrawColorRow(dl, rl, rr, ry, "skeleton color", ref espSkeletonColor);
+                ry = NextRow(ry);
+            }
+
+            if (Settings.Visuals.Health || Settings.Visuals.HealthText)
+            {
+                DrawColorRow(dl, rl, rr, ry, "health color", ref espHealthColor);
+                ry = NextRow(ry);
+            }
+
+            if (Settings.Visuals.Distance)
+            {
+                DrawColorRow(dl, rl, rr, ry, "distance color", ref espDistanceColor);
+                ry = NextRow(ry);
+                DrawSliderRow(dl, rl, rr, ry, "distance size", ref Settings.Visuals.DistanceSize, 8f, 32f);
+                ry = NextRow(ry);
+            }
+
+            if (Settings.Visuals.HeadCircle)
+            {
+                DrawColorRow(dl, rl, rr, ry, "head color", ref espHeadColor);
+                ry = NextRow(ry);
+                DrawSliderRow(dl, rl, rr, ry, "head scale", ref Settings.Visuals.HeadCircleMaxScale, 0.5f, 4f);
+                ry = NextRow(ry);
+            }
+
+            if (Settings.Visuals.Tracers)
+            {
+                DrawColorRow(dl, rl, rr, ry, "tracer color", ref espTracerColor);
+                ry = NextRow(ry);
+                DrawSliderRow(dl, rl, rr, ry, "tracer thickness", ref Settings.Visuals.TracerThickness, 0.5f, 6f);
+                ry = NextRow(ry);
+            }
+
+            if (Settings.Visuals.ChinaHat)
+            {
+                DrawColorRow(dl, rl, rr, ry, "china hat color", ref espChinaHatColor);
+                ry = NextRow(ry);
+            }
+
+            if (Settings.Visuals.DistanceCheck)
+            {
+                DrawSliderRow(dl, rl, rr, ry, "max distance", ref Settings.Visuals.MaxDistance, 50f, 5000f);
+                ry = NextRow(ry);
+            }
+
+            if (Settings.Visuals.OffscreenArrows)
+            {
+                DrawSliderRow(dl, rl, rr, ry, "arrow size", ref Settings.Visuals.ArrowSize, 6f, 30f);
+                ry = NextRow(ry);
+                DrawSliderRow(dl, rl, rr, ry, "arrow radius", ref Settings.Visuals.ArrowRadius, 40f, 400f);
+                ry = NextRow(ry);
+            }
+
+            if (Settings.Visuals.Chams)
+            {
+                DrawSettingRow(dl, rl, rr, ry, "chams mode", (a, b) =>
+                {
+                    int cm = Settings.Visuals.ChamsMode;
+                    if (YerbaWidgets.ActionButton(new Vector2(b.X - YerbaLayout.SettingControlPad - 90f, a.Y + 5f),
+                        new Vector2(b.X - YerbaLayout.SettingControlPad, b.Y - 5f), 5f, cm == 1 ? "wireframe" : "solid", YerbaLayout.ConfigBtnFont))
+                    {
+                        cm = (cm == 1) ? 0 : 1;
+                        Settings.Visuals.ChamsMode = cm;
+                    }
+                });
+                ry = NextRow(ry);
+
+                DrawSliderRow(dl, rl, rr, ry, "chams fill alpha", ref Settings.Visuals.ChamsFillAlpha, 0f, 1f);
+                ry = NextRow(ry);
+                DrawSliderRow(dl, rl, rr, ry, "chams outline alpha", ref Settings.Visuals.ChamsOutlineAlpha, 0f, 1f);
+                ry = NextRow(ry);
+            }
         }
 
         // ── CHARACTER TAB (movement stuff) ─────────────────────────────────
@@ -853,13 +952,22 @@ namespace IMGUI
                 y = NextRow(y);
             }
 
+            if (MatchesSearch("show watermark", SearchQuery))
+            {
+                var wmRowMin = new Vector2(ll, y);
+                var wmRowMax = new Vector2(lr, y + YerbaLayout.SettingRowH);
+                DrawLabelRow(dl, wmRowMin, wmRowMax, "show watermark");
+                DrawCheckboxRight(dl, wmRowMin, wmRowMax, ref showWatermark);
+                y = NextRow(y);
+            }
+
             if (MatchesSearch("attach", SearchQuery))
             {
                 y += YerbaLayout.UnloadTopGap;
                 var unloadMin = new Vector2(ll + YerbaLayout.SettingLabelPad, y);
                 var unloadMax = new Vector2(lr - YerbaLayout.SettingLabelPad, y + YerbaLayout.UnloadH);
                 if (YerbaWidgets.ActionButton(unloadMin, unloadMax, YerbaLayout.UnloadRound, "ATTACH", YerbaLayout.SettingRowFont))
-                    AutoAttach();
+                    Reattach();
             }
 
             // Right: configs

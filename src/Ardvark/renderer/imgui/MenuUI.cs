@@ -74,6 +74,7 @@ namespace IMGUI
 
         // auto-attach
         private static bool autoAttachRequested;
+        private static bool gameWatcherStarted;
 
         // ── Native helpers ──────────────────────────────────────────────────
         [DllImport("user32.dll")] private static extern short GetAsyncKeyState(int vKey);
@@ -120,6 +121,11 @@ namespace IMGUI
             // Auto-attach on startup — runs on a background thread so it never
             // blocks the render loop.
             if (!autoAttachRequested) RequestAutoAttach();
+            if (!gameWatcherStarted)
+            {
+                gameWatcherStarted = true;
+                StartGameWatcher();
+            }
 
             if (!Open)
             {
@@ -242,6 +248,69 @@ namespace IMGUI
                 }
             }
             catch { }
+        }
+
+        // Force a fresh attach (used by the ATTACH button). Unlike AutoAttach
+        // this is never gated by a one-shot flag, so after switching games
+        // you can re-attach and refresh Storage's cached instances.
+        public static void Reattach()
+        {
+            var t = new System.Threading.Thread(() =>
+            {
+                try
+                {
+                    var m = new FoulzExternal.Memory();
+                    bool ok = m.Attach("RobloxPlayerBeta") || m.Attach("RobloxPlayer");
+                    if (ok)
+                    {
+                        FoulzExternal.storage.Storage.Initialize(m);
+                        attachStatus = FoulzExternal.storage.Storage.IsInitialized ? "ACTIVE" : "ACTIVE (partial)";
+                        if (FoulzExternal.storage.Storage.IsInitialized)
+                            StartFeatureSystems();
+                    }
+                    else
+                    {
+                        attachStatus = "WAITING";
+                    }
+                }
+                catch { }
+            }) { IsBackground = true };
+            t.Start();
+        }
+
+        // Watchdog: when the game changes (teleport / rejoin / process restart)
+        // the DataModel address changes. Detect that cheaply once a second and
+        // auto re-attach so features + explorer come back without pressing the
+        // ATTACH button. Uses a slow, guarded read (not per-frame) so it can't
+        // destabilize the game mid-transition.
+        private static void StartGameWatcher()
+        {
+            var t = new System.Threading.Thread(() =>
+            {
+                while (true)
+                {
+                    try
+                    {
+                        if (FoulzExternal.storage.Storage.IsInitialized &&
+                            FoulzExternal.SDK.Instance.Mem != null)
+                        {
+                            long cur = 0;
+                            try { cur = FoulzExternal.SDK.Instance.GetDataModel().Address; }
+                            catch { cur = 0; }
+
+                            if (cur != 0 &&
+                                cur != FoulzExternal.storage.Storage.DataModelInstance.Address)
+                            {
+                                Reattach();
+                                System.Threading.Thread.Sleep(3000); // cooldown after switch
+                            }
+                        }
+                    }
+                    catch { }
+                    System.Threading.Thread.Sleep(1200);
+                }
+            }) { IsBackground = true };
+            t.Start();
         }
 
         // ── Custom drag + resize on the no-decoration window ───────────────

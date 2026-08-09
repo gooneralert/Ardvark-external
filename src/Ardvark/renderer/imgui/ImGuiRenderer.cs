@@ -56,6 +56,14 @@ namespace IMGUI
         private static int fpsFrameCount;
         private static float measuredFps = 0f;
         public static float MeasuredFps => measuredFps;
+
+        // ── Watermark position/drag state ─────────────────────────────────
+        // Draggable only while the menu is open; locked in place when the menu
+        // is closed so it never interferes with gameplay interaction.
+        private static Vector2 wmPos = new(12f, 12f);
+        private static bool wmDrag;
+        private static Vector2 wmDragOffset;
+
         private static void TickFps()
         {
             fpsFrameCount++;
@@ -67,10 +75,104 @@ namespace IMGUI
             }
         }
 
+        // ── Watermark (Yerba-styled): ardvark · username · fps ──
+        private static void DrawWatermark()
+        {
+            if (!MenuUI.showWatermark) return;
+            try
+            {
+                var dl = ImGui.GetForegroundDrawList();
+                var io = ImGui.GetIO();
+
+                // Roblox username (display name fallback)
+                string user = "not attached";
+                try
+                {
+                    if (FoulzExternal.storage.Storage.LocalPlayerInstance.IsValid)
+                    {
+                        string n = FoulzExternal.storage.Storage.LocalPlayerInstance.GetName();
+                        user = string.IsNullOrWhiteSpace(n) ? "guest" : n;
+                    }
+                }
+                catch { user = "guest"; }
+
+                string head = "ardvark";
+                string userLine = user;
+                string statLine = $"{measuredFps:0} fps";
+
+                var pad = new Vector2(10f, 8f);
+                var sHead = ImGui.CalcTextSize(head);
+                var sUser = ImGui.CalcTextSize(userLine);
+                var sStat = ImGui.CalcTextSize(statLine);
+                float w = Math.Max(sHead.X, Math.Max(sUser.X, sStat.X)) + pad.X * 2f + 10f;
+                float h = pad.Y * 2f + sHead.Y + sUser.Y + sStat.Y + 12f;
+
+                var min = wmPos;
+                var max = new Vector2(min.X + w, min.Y + h);
+
+                // ── Draggable only while the menu is open ──────────────────
+                // Uses raw Win32 input: the transparent overlay is click-through
+                // outside its ImGui widgets, so io.MouseClicked isn't reliable
+                // over the watermark. Reading the global button/cursor works.
+                if (MenuUI.Open)
+                {
+                    GetCursorPos(out var pt);
+                    var m = new Vector2(pt.X, pt.Y);
+                    bool pressed = (GetAsyncKeyState(VK_LBUTTON) & 0x8000) != 0;
+                    bool over = m.X >= min.X && m.X <= max.X && m.Y >= min.Y && m.Y <= max.Y;
+
+                    if (pressed && over && !wmDrag)
+                    {
+                        wmDrag = true;
+                        wmDragOffset = m - wmPos;
+                    }
+                    else if (!pressed)
+                    {
+                        wmDrag = false;
+                    }
+
+                    if (wmDrag && pressed)
+                    {
+                        wmPos = m - wmDragOffset;
+                        wmPos = Vector2.Max(new Vector2(4f, 4f),
+                            Vector2.Min(new Vector2(io.DisplaySize.X - w - 4f, io.DisplaySize.Y - h - 4f), wmPos));
+                        min = wmPos;
+                        max = new Vector2(min.X + w, min.Y + h);
+                    }
+                }
+
+                // background + border
+                dl.AddRectFilled(min, max, 0xE80F1013, 6f);
+                dl.AddRect(min, max, 0x55202A38, 6f, ImDrawFlags.None, 1f);
+                // left accent bar
+                dl.AddRectFilled(new Vector2(min.X, min.Y + 6f), new Vector2(min.X + 3f, max.Y - 6f), 0xFF4FA3E1, 2f);
+
+                float x = min.X + pad.X + 8f;
+                float yTop = min.Y + pad.Y;
+
+                // header
+                dl.AddText(new Vector2(x, yTop), 0xFFFFFFFF, head);
+                yTop += sHead.Y;
+                // username
+                dl.AddText(new Vector2(x, yTop), 0xFF76D0F2, userLine);
+                yTop += sUser.Y + 4f;
+                // divider
+                dl.AddLine(new Vector2(x, yTop), new Vector2(max.X - pad.X, yTop), 0x40202A38, 1f);
+                yTop += 4f;
+                // stats: fps · ping · game
+                dl.AddText(new Vector2(x, yTop), 0xFF9AA0B0, statLine);
+            }
+            catch { }
+        }
+
         private static ExitEventHandler? onAppExit;
         private static EventHandler? onDispatcherShutdown;
         private static EventHandler? onProcessExit;
 
+        [StructLayout(LayoutKind.Sequential)] private struct POINT { public int X; public int Y; }
+        [DllImport("user32.dll")] private static extern bool GetCursorPos(out POINT lpPoint);
+        [DllImport("user32.dll")] private static extern short GetAsyncKeyState(int vKey);
+        private const int VK_LBUTTON = 0x01;
         [DllImport("user32.dll")] private static extern IntPtr GetForegroundWindow();
         [DllImport("user32.dll", CharSet = CharSet.Unicode)] private static extern int GetWindowTextW(IntPtr hWnd, StringBuilder lpString, int nMaxCount);
         [DllImport("user32.dll")] private static extern uint GetWindowThreadProcessId(IntPtr hWnd, out uint lpdwProcessId);
@@ -138,6 +240,13 @@ namespace IMGUI
                     var fpsPos = new Vector2(ioFps.DisplaySize.X - fpsSize.X - 10f, 8f);
                     dFps.AddText(fpsPos, 0xFFFFFFFF, fpsText);
                 }
+            }
+            catch { }
+
+            // ── Yerba-style watermark (ardvark · user · fps · ping · game) ───
+            try
+            {
+                DrawWatermark();
             }
             catch { }
 

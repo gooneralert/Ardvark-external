@@ -454,16 +454,7 @@ namespace FoulzExternal.games.universal.visuals
             const bool outline = true;
 
             if (settings.BoxESP)
-            {
-                if (settings.BoxMode == 1)
-                    DrawCornerBox(dl, bx1, by1, bx2, by2, boxColor, thick, outline);
-                else
-                    DrawBox(dl, bx1, by1, bx2, by2, boxColor, thick, outline);
-            }
-            else if (settings.CornerESP)
-            {
-                DrawCornerBox(dl, bx1, by1, bx2, by2, boxColor, thick, outline);
-            }
+                DrawBox(dl, bx1, by1, bx2, by2, boxColor, thick, outline);
 
             if (settings.Name && !string.IsNullOrEmpty(p.Name))
                 DrawCenteredText(dl, p.Name, (bx1 + bx2) * 0.5f, by1 - 15f, 12f, White);
@@ -490,8 +481,20 @@ namespace FoulzExternal.games.universal.visuals
                 }
             }
 
+            // ── China hat ────────────────────────────────────────────────
+            if (settings.ChinaHat && p.Head.IsValid)
+                DrawChinaHat(dl, vm, viewport, GetPos(p.Head, false), rgba(1f, 0.2f, 0.2f, 1f));
+
             if (settings.Chams)
-                DrawPlayerChams(dl, vm, viewport, p.Bones, settings);
+            {
+                // Skip the small HRP pelvis box so it doesn't show up as a stray
+                // rectangle floating in the middle of the chams model.
+                var chamsParts = new List<SDKInstance>();
+                for (int i = 0; i < p.Bones.Count; ++i)
+                    if (p.Bones[i].IsValid && p.Bones[i].Address != p.HumanoidRootPart.Address)
+                        chamsParts.Add(p.Bones[i]);
+                DrawPlayerChams(dl, vm, viewport, chamsParts, settings);
+            }
         }
 
         // ── Standard: OBB box + head/feet clamp + text + skeleton + chams ──
@@ -578,16 +581,7 @@ namespace FoulzExternal.games.universal.visuals
             const bool outline = true;
 
             if (settings.BoxESP)
-            {
-                if (settings.BoxMode == 1)
-                    DrawCornerBox(dl, bx1, by1, bx2, by2, boxColor, thick, outline);
-                else
-                    DrawBox(dl, bx1, by1, bx2, by2, boxColor, thick, outline);
-            }
-            else if (settings.CornerESP)
-            {
-                DrawCornerBox(dl, bx1, by1, bx2, by2, boxColor, thick, outline);
-            }
+                DrawBox(dl, bx1, by1, bx2, by2, boxColor, thick, outline);
 
             if (settings.Name && !string.IsNullOrEmpty(p.Name))
                 DrawCenteredText(dl, p.Name, (bx1 + bx2) * 0.5f, by1 - 15f, 12f, White);
@@ -664,6 +658,10 @@ namespace FoulzExternal.games.universal.visuals
                 }
             }
 
+            // ── China hat ───────────────────────────────────────────────
+            if (settings.ChinaHat && p.Head.IsValid && partPositions.TryGetValue(p.Head.Address, out var chHatPos))
+                DrawChinaHat(dl, vm, viewport, chHatPos, rgba(1f, 0.2f, 0.2f, 1f));
+
             // ── Non-engine chams: convex-hull fill per part + outline ───────
             if (settings.Chams)
             {
@@ -686,12 +684,11 @@ namespace FoulzExternal.games.universal.visuals
 
             float fillA = Math.Clamp(settings.ChamsFillAlpha, 0f, 1f);
             float outA = Math.Clamp(settings.ChamsOutlineAlpha, 0f, 1f);
-            uint fill = rgba(0.25f, 0.45f, 1f, fillA);
-            uint outline = rgba(0.75f, 0.82f, 1f, outA);
 
-            if (settings.ChamsMode == 2)
+            // Wireframe (ChamsMode 1): OBB edges per part. (Shader/mesh modes removed.)
+            if (settings.ChamsMode == 1)
             {
-                // Wireframe: just the OBB edges per part.
+                uint outline = rgba(0.75f, 0.82f, 1f, outA);
                 var pts = new NVector2[8];
                 for (int pi = 0; pi < parts.Count; ++pi)
                 {
@@ -729,19 +726,47 @@ namespace FoulzExternal.games.universal.visuals
                 return;
             }
 
-            // Solid + shader both use the hull fill pipeline.
-            uint fillCol = fill;
-            if (settings.ChamsMode == 1)
+            // Solid: per-part hulls, dilated slightly outward so adjacent limbs
+            // (hand/arm, foot/leg, thigh/shin) overlap each other and leave no
+            // gap, then the outside-union outline is drawn over the same set.
+            BuildChamsPieces(vm, viewport, parts, out var hulls, out _);
+            if (hulls.Count == 0) return;
+
+            uint fillCol = rgba(0.25f, 0.45f, 1f, fillA);
+            var dilated = new List<List<NVector2>>(hulls.Count);
+            for (int i = 0; i < hulls.Count; ++i)
+                dilated.Add(DilatePoly(hulls[i], 4f));
+
+            var backup = dl.Flags;
+            dl.Flags &= ~ImDrawListFlags.AntiAliasedFill;
+            for (int i = 0; i < dilated.Count; ++i)
             {
-                // Shader-style: animated scan band over the body silhouette.
-                float t = (float)(Environment.TickCount64 & 0xFFFF) / 65535f;
-                DrawHullChams(dl, vm, viewport, parts, fillCol, outline);
-                DrawScanBand(dl, vm, viewport, parts, t, fillCol);
+                var arr = dilated[i].ToArray();
+                dl.AddConvexPolyFilled(ref arr[0], arr.Length, fillCol);
             }
-            else
+            dl.Flags = backup;
+
+            DrawChamsOutline(dl, dilated, rgba(0.75f, 0.82f, 1f, outA));
+        }
+
+        // Grow a convex polygon outward from its centroid by `pad` pixels.
+        private static List<NVector2> DilatePoly(List<NVector2> poly, float pad)
+        {
+            int n = poly.Count;
+            var res = new List<NVector2>(n);
+            if (n == 0) return res;
+            float cx = 0f, cy = 0f;
+            for (int i = 0; i < n; ++i) { cx += poly[i].X; cy += poly[i].Y; }
+            cx /= n; cy /= n;
+            for (int i = 0; i < n; ++i)
             {
-                DrawHullChams(dl, vm, viewport, parts, fillCol, outline);
+                float dx = poly[i].X - cx, dy = poly[i].Y - cy;
+                float len = MathF.Sqrt(dx * dx + dy * dy);
+                if (len < 0.0001f) { res.Add(poly[i]); continue; }
+                float s = (len + pad) / len;
+                res.Add(new NVector2(cx + dx * s, cy + dy * s));
             }
+            return res;
         }
 
         // ── Animated shader scan band (ported from C++ ShaderChams ScanY) ──
@@ -786,13 +811,14 @@ namespace FoulzExternal.games.universal.visuals
             dl.AddRectFilled(new NVector2(minX - 2f, cy - bh * 0.5f), new NVector2(maxX + 2f, cy + bh * 0.5f), color);
         }
 
-        // ── Convex-hull chams fill + outside-union outline (C++ mode 2) ─────
-        private static void DrawHullChams(ImDrawListPtr dl, SMatrix4 vm, SVector2 viewport,
-            IList<SDKInstance> parts, uint fillColor, uint outlineColor)
+        // ── Chams geometry: per-part convex hulls + non-overlapping pieces ────────
+        // Matches the original ESP.cpp: each body part is its own convex hull,
+        // then pieces are subtracted against earlier hulls so fills don't
+        // overlap. This keeps the real (concave) body shape instead of a blob.
+        private static void BuildChamsPieces(SMatrix4 vm, SVector2 viewport,
+            IList<SDKInstance> parts, out List<List<NVector2>> hulls, out List<List<NVector2>> clipped)
         {
-            if (parts == null || parts.Count == 0) return;
-
-            var hulls = new List<List<NVector2>>();
+            hulls = new List<List<NVector2>>();
             for (int pi = 0; pi < parts.Count; ++pi)
             {
                 var part = parts[pi];
@@ -814,14 +840,11 @@ namespace FoulzExternal.games.universal.visuals
                             if (WorldToScreen(vm, viewport, w, out SVector2 sp))
                                 pts.Add(new NVector2(sp.x, sp.y));
                         }
-
                 if (pts.Count >= 3)
                     hulls.Add(ConvexHull(pts));
             }
-            if (hulls.Count == 0) return;
 
-            // Clip pieces so fills don't overlap (C++ SubtractPoly).
-            var clipped = new List<List<NVector2>>();
+            clipped = new List<List<NVector2>>();
             clipped.Capacity = hulls.Count * 2;
             for (int i = 0; i < hulls.Count; ++i)
             {
@@ -831,26 +854,30 @@ namespace FoulzExternal.games.universal.visuals
                 {
                     if (hulls[j].Count < 3) continue;
                     var next = new List<List<NVector2>>();
-                    foreach (var piece in pieces)
-                        SubtractPoly(piece, hulls[j], next);
+                    foreach (var pc in pieces)
+                        SubtractPoly(pc, hulls[j], next);
                     pieces = next;
                 }
-                foreach (var piece in pieces)
-                    if (piece.Count >= 3) clipped.Add(piece);
+                foreach (var pc in pieces)
+                    if (pc.Count >= 3) clipped.Add(pc);
             }
+        }
 
-            // Fill
-            ImDrawListFlags backup = dl.Flags;
+        private static void FillPieces(ImDrawListPtr dl, List<List<NVector2>> pieces, uint color)
+        {
+            var backup = dl.Flags;
             dl.Flags &= ~ImDrawListFlags.AntiAliasedFill;
-            for (int i = 0; i < clipped.Count; ++i)
+            for (int i = 0; i < pieces.Count; ++i)
             {
-                if (clipped[i].Count < 3) continue;
-                var arr = clipped[i].ToArray();
-                dl.AddConvexPolyFilled(ref arr[0], arr.Length, fillColor);
+                if (pieces[i].Count < 3) continue;
+                var arr = pieces[i].ToArray();
+                dl.AddConvexPolyFilled(ref arr[0], arr.Length, color);
             }
             dl.Flags = backup;
+        }
 
-            // Outline — outside union of other parts (C++ DrawSegmentOutsideUnion)
+        private static void DrawChamsOutline(ImDrawListPtr dl, List<List<NVector2>> hulls, uint outlineColor)
+        {
             for (int i = 0; i < hulls.Count; ++i)
             {
                 var hull = hulls[i];
@@ -859,6 +886,60 @@ namespace FoulzExternal.games.universal.visuals
                 for (int e = 0; e < n; ++e)
                     DrawSegmentOutsideUnion(dl, hull[e], hull[(e + 1) % n], hulls, i, outlineColor);
             }
+        }
+
+        private static uint MixU32(uint a, uint b, float t)
+        {
+            if (t < 0f) t = 0f; else if (t > 1f) t = 1f;
+            uint ar = (a >> 0) & 0xFF, ag = (a >> 8) & 0xFF, ab = (a >> 16) & 0xFF, aa = (a >> 24) & 0xFF;
+            uint br = (b >> 0) & 0xFF, bg = (b >> 8) & 0xFF, bb = (b >> 16) & 0xFF, ba = (b >> 24) & 0xFF;
+            uint r = (uint)(ar + (br - ar) * t);
+            uint g = (uint)(ag + (bg - ag) * t);
+            uint bl = (uint)(ab + (bb - ab) * t);
+            uint al = (uint)(aa + (ba - aa) * t);
+            return (al << 24) | (bl << 16) | (g << 8) | r;
+        }
+
+        // ── Shader chams fill: vertical gradient across the body silhouette ──
+        private static void DrawShaderChamsFill(ImDrawListPtr dl, List<List<NVector2>> pieces,
+            uint topColor, uint botColor)
+        {
+            float mn = 1e9f, mx = -1e9f;
+            for (int i = 0; i < pieces.Count; ++i)
+                for (int v = 0; v < pieces[i].Count; ++v)
+                {
+                    float y = pieces[i][v].Y;
+                    if (y < mn) mn = y;
+                    if (y > mx) mx = y;
+                }
+            if (mx - mn < 0.5f)
+            {
+                FillPieces(dl, pieces, MixU32(topColor, botColor, 0.5f));
+                return;
+            }
+
+            const int strips = 18;
+            float stepH = (mx - mn) / strips;
+            var backup = dl.Flags;
+            dl.Flags &= ~ImDrawListFlags.AntiAliasedFill;
+            for (int k = 0; k < strips; ++k)
+            {
+                float y0 = mn + stepH * k;
+                float y1 = (k == strips - 1) ? mx : y0 + stepH;
+                float t = ((y0 + y1) * 0.5f - mn) / (mx - mn);
+                uint col = MixU32(topColor, botColor, t);
+
+                for (int i = 0; i < pieces.Count; ++i)
+                {
+                    var clip = ClipHalfPlane(pieces[i], new NVector2(0f, y0), new NVector2(1f, y0), 1f);
+                    if (clip.Count < 3) continue;
+                    clip = ClipHalfPlane(clip, new NVector2(0f, y1), new NVector2(-1f, y1), 1f);
+                    if (clip.Count < 3) continue;
+                    var arr = clip.ToArray();
+                    dl.AddConvexPolyFilled(ref arr[0], arr.Length, col);
+                }
+            }
+            dl.Flags = backup;
         }
 
         private static void DrawBone(ImDrawListPtr dl, SMatrix4 vm, SVector2 viewport,
@@ -888,6 +969,65 @@ namespace FoulzExternal.games.universal.visuals
         private static SVector3 localPos;
 
         internal static void UpdateLocalPlayerPos(SVector3 pos) => localPos = pos;
+
+        // ── China hat (cone over the head, ported faithfully from C++ DrawChinaHat) ──
+        private static void DrawChinaHat(ImDrawListPtr dl, SMatrix4 vm, SVector2 viewport, SVector3 headPos, uint color)
+        {
+            const int segs = 48;
+            // Hat sits above the head: the head part is ~1 stud tall (center at
+            // headPos), so the base ring goes near the top of the head and the
+            // apex well above it. Kept large enough to be clearly visible.
+            const float hatH = 0.9f;
+            const float hatR = 1.5f;
+            const float baseY = 0.35f; // above head center, lowered a bit
+
+            var apex = new SVector3 { x = headPos.x, y = headPos.y + hatH + baseY, z = headPos.z };
+            if (!WorldToScreen(vm, viewport, apex, out SVector2 ap)) return;
+
+            var baseS = new NVector2[segs];
+            float step = (float)(Math.PI * 2.0 / segs);
+            for (int i = 0; i < segs; ++i)
+            {
+                float ang = step * i;
+                var p = new SVector3 { x = headPos.x + hatR * (float)Math.Cos(ang), y = headPos.y + baseY, z = headPos.z + hatR * (float)Math.Sin(ang) };
+                if (!WorldToScreen(vm, viewport, p, out SVector2 sp))
+                {
+                    baseS[i] = new NVector2(-9999f, -9999f);
+                    continue;
+                }
+                baseS[i] = new NVector2(sp.x, sp.y);
+            }
+
+            // Wireframe cone: spokes from the apex to each base vertex, plus the
+            // base ring. Uses black outline with a colored overlay for contrast.
+            uint wireCol = 0xFF000000;      // black silhouette
+            uint wireAccent = color;        // visible accent
+            const float thick = 1.6f;
+
+            var fl = dl.Flags;
+            dl.Flags |= ImDrawListFlags.AntiAliasedLines;
+
+            NVector2 apexIm = new(ap.x, ap.y);
+
+            // Spokes apex → base vertex.
+            for (int i = 0; i < segs; ++i)
+            {
+                if (baseS[i].X < -9000f) continue;
+                dl.AddLine(apexIm, baseS[i], wireCol, thick + 1f);
+                dl.AddLine(apexIm, baseS[i], wireAccent, thick);
+            }
+
+            // Base ring.
+            for (int i = 0; i < segs; ++i)
+            {
+                int next = (i + 1) % segs;
+                if (baseS[i].X < -9000f || baseS[next].X < -9000f) continue;
+                dl.AddLine(baseS[i], baseS[next], wireCol, thick + 1f);
+                dl.AddLine(baseS[i], baseS[next], wireAccent, thick);
+            }
+
+            dl.Flags = fl;
+        }
 
         private static float Distance2D(SVector3 a, SVector3 b) =>
             MathF.Sqrt((a.x - b.x) * (a.x - b.x) + (a.z - b.z) * (a.z - b.z));

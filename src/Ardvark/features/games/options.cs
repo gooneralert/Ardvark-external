@@ -101,6 +101,27 @@ namespace Options
         public float Range = 100f;
         public int TargetBone = 0;
 
+        // ── Ported from the C++ aimbot module ──────────────────────────────
+        public int AimPart = 0;          // 0 Head, 1 UpperTorso, 2 LowerTorso, 3 HumanoidRootPart, 4 ClosestToCursor, 5 CursorPoint, 6 Calf
+        public int FOVType = 0;          // 0 cursor-based FOV, 1 screen-center FOV
+        public bool UseFOV = true;       // respect the FOV limit when picking a target
+        public bool RangeCheck = false;  // respect Range
+        public bool HealthCheck = false; // skip targets below HealthThreshold
+        public float HealthThreshold = 0f;
+        public bool KnockCheck = false;  // skip K.O'ed targets
+        public bool Autoswitch = false;  // pick a fresh target each frame
+        public bool UnlockOnDeath = true; // drop the lock when the target dies
+        public bool CamlockShake = false;
+        public float CamlockShakeX = 1f;
+        public float CamlockShakeY = 1f;
+
+        // smoothing / easing
+        public int SmoothingStyle = 0;   // 0..10 easing curve
+        public float LinearSpeed = 5f;   // style 1
+        public float QuadPower = 2f;     // styles 2..4
+        public float CubicSharpness = 3f; // styles 5..7
+        public float SineMultiplier = 2f; // styles 8..10
+
         public Aiming() { }
     }
     public class Silent
@@ -129,7 +150,6 @@ namespace Options
         public bool PFSwitchTeam = false;
         public bool DownedCheck = false;
         public bool TransparencyCheck = false;
-        public bool WallCheck = false;
         public Checks()
         {
         }

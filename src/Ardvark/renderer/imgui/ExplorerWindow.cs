@@ -19,14 +19,21 @@ namespace IMGUI
         public static bool Open;
 
         private static bool posInited;
-        private static Vector2 pos = new(160f, 100f);
-        private static Vector2 size = new(320f, 480f);
+        private static Vector2 pos = new(200f, 120f);
+        private static Vector2 size = new(540f, 720f);
 
         private static bool dragActive;
         private static Vector2 dragStartMouse;
         private static Vector2 dragStartPos;
 
+        private static bool resizeActive;
+        private static Vector2 resizeStartMouse;
+        private static Vector2 resizeStartPos;
+        private static Vector2 resizeStartSize;
+
         private static string search = "";
+        private static string lastSearch = "";
+        private static readonly List<Node> searchResults = new();
         private static long selectedAddr;
         private static long ctxAddr;
         private static string ctxName = "";
@@ -84,13 +91,21 @@ namespace IMGUI
             try
             {
                 var inst = new SInstance(n.Address);
-                foreach (var c in inst.GetChildren())
+                var kids = inst.GetChildren();
+                foreach (var c in kids)
                 {
-                    string name = c.GetName()?.Trim() ?? "";
-                    if (string.IsNullOrEmpty(name) || name == "???" || name == "[Unnamed]") continue;
-                    string cls = c.GetClass() ?? "";
-                    bool hasKids = false;
-                    try { hasKids = c.GetChildren().Count > 0; } catch { }
+                    string name;
+                    string cls;
+                    bool hasKids;
+                    try
+                    {
+                        name = c.GetName()?.Trim() ?? "";
+                        cls = c.GetClass() ?? "";
+                        hasKids = c.GetChildren().Count > 0;
+                    }
+                    catch { continue; }
+
+                    if (string.IsNullOrEmpty(name)) name = "[unnamed]";
                     n.Children.Add(new Node
                     {
                         Address = c.Address,
@@ -101,7 +116,14 @@ namespace IMGUI
                 }
             }
             catch { }
+
             n.HasKids = n.Children.Count > 0;
+
+            // If we found nothing (game not ready / stale), allow a retry next
+            // frame instead of permanently caching an empty node.
+            if (n.Children.Count == 0)
+                n.Loaded = false;
+
             SortChildren(n);
 
             // Auto-open Workspace under DataModel (matches geeg lad)
@@ -121,7 +143,12 @@ namespace IMGUI
 
         private static void EnsureRoot()
         {
+            // Root comes from Storage's DataModel (refreshed on attach) — the same
+            // source the working WPF explorer used. No per-frame live reads here:
+            // chasing fresh DataModel pointers during a game switch is what caused
+            // instability/crashes. Re-attach (ATTACH button) refreshes Storage.
             long dm = Storage.IsInitialized ? Storage.DataModelInstance.Address : 0;
+
             if (dm != 0 && dm != rootAddr)
             {
                 rootAddr = dm;
@@ -155,6 +182,23 @@ namespace IMGUI
             }
             parts.Reverse();
             return string.Join(".", parts);
+        }
+
+        // Stable per-class color so the explorer looks like Roblox Studio (each class
+        // gets its own icon color).
+        private static uint IconColor(string cls)
+        {
+            if (string.IsNullOrEmpty(cls)) return 0xFF888888;
+            uint[] pal =
+            {
+                0xFF4FC3F7, 0xFFFFB74D, 0xFF81C784, 0xFFF06292, 0xFFBA68C8,
+                0xFF4DB6AC, 0xFFFF8A65, 0xFFA1887F, 0xFF90A4AE, 0xFFE57373,
+                0xFFAED581, 0xFF7986CB, 0xFFF48FB1, 0xFFFFD54F, 0xFF29B6F6
+            };
+            int h = 0;
+            for (int i = 0; i < cls.Length; ++i)
+                h = (h * 31 + cls[i]) & 0xFFFFFF;
+            return pal[(uint)((h & 0x7FFFFFFF) % pal.Length)];
         }
 
         private static void RenderNode(ImDrawListPtr dl, Node node, int depth, float availW, ref float y, float bottom)
@@ -192,8 +236,13 @@ namespace IMGUI
             }
 
             float textX = rowMin.X + depth * indent + (hasKids ? 18f : 6f);
+            float cy = (rowMin.Y + rowMax.Y) * 0.5f;
+
+            // Class icon (small rounded square) before the name.
+            dl.AddRectFilled(new Vector2(textX - 13f, cy - 5f), new Vector2(textX - 2f, cy + 5f), IconColor(node.Class), 2f);
+
             var textSize = ImGui.CalcTextSize(node.Name);
-            dl.AddText(new Vector2(textX, (rowMin.Y + rowMax.Y) * 0.5f - textSize.Y * 0.5f),
+            dl.AddText(new Vector2(textX + 2f, cy - textSize.Y * 0.5f),
                 isSelected ? YerbaColors.TextActive : YerbaColors.WithAlpha(YerbaColors.TextActive, 0.82f), node.Name);
 
             if (hovered && ImGui.IsMouseClicked(ImGuiMouseButton.Left))
@@ -226,17 +275,42 @@ namespace IMGUI
             }
         }
 
-        private static void RenderSearchResults(ImDrawListPtr dl, Node node, int depth, float availW, ref float y, float bottom)
+        private static void BuildSearchResults()
+        {
+            searchResults.Clear();
+            if (string.IsNullOrEmpty(search) || root.Address == 0) return;
+
+            int cap = 500;   // max results drawn
+            int visits = 0; // max nodes examined (prevents extreme lag)
+
+            void Walk(Node n)
+            {
+                if (searchResults.Count >= cap) return;
+                if (++visits > 8000) return;
+                if (!n.Loaded) LoadChildren(n);
+
+                if (n.Name.IndexOf(search, StringComparison.OrdinalIgnoreCase) >= 0)
+                    searchResults.Add(n);
+
+                foreach (var child in n.Children)
+                    Walk(child);
+            }
+
+            Walk(root);
+        }
+
+        private static void RenderCachedResults(ImDrawListPtr dl, float availW, ref float y, float bottom)
         {
             const float rowH = 22f;
-            if (y + rowH > bottom) return;
-
-            if (node.Name.IndexOf(search, StringComparison.OrdinalIgnoreCase) >= 0)
+            for (int i = 0; i < searchResults.Count; ++i)
             {
+                if (y + rowH > bottom) return;
+                var node = searchResults[i];
+
                 var rowMin = new Vector2(pos.X + 4f, y);
                 var rowMax = new Vector2(pos.X + availW - 4f, y + rowH);
-                bool hovered = YerbaWidgets.IsMouseHoveringRect(rowMin, rowMax);
                 bool isSelected = selectedAddr == node.Address;
+                bool hovered = YerbaWidgets.IsMouseHoveringRect(rowMin, rowMax);
 
                 if (hovered && !isSelected)
                     dl.AddRectFilled(rowMin, rowMax, YerbaColors.WithAlpha(YerbaColors.TextActive, 0.06f));
@@ -244,8 +318,11 @@ namespace IMGUI
                     dl.AddRect(new Vector2(rowMin.X + 2f, rowMin.Y + 2f), new Vector2(rowMax.X - 2f, rowMax.Y - 2f),
                         YerbaColors.WithAlpha(YerbaColors.TextActive, 0.35f));
 
+                float cy = (rowMin.Y + rowMax.Y) * 0.5f;
+                dl.AddRectFilled(new Vector2(rowMin.X + 17f, cy - 5f), new Vector2(rowMin.X + 28f, cy + 5f), IconColor(node.Class), 2f);
+
                 var textSize = ImGui.CalcTextSize(node.Name);
-                dl.AddText(new Vector2(rowMin.X + 8f, (rowMin.Y + rowMax.Y) * 0.5f - textSize.Y * 0.5f),
+                dl.AddText(new Vector2(rowMin.X + 32f, cy - textSize.Y * 0.5f),
                     isSelected ? YerbaColors.TextActive : YerbaColors.WithAlpha(YerbaColors.TextActive, 0.82f), node.Name);
 
                 if (hovered && ImGui.IsMouseClicked(ImGuiMouseButton.Left))
@@ -261,15 +338,13 @@ namespace IMGUI
 
                 y += rowH;
             }
-
-            if (!node.Loaded) LoadChildren(node);
-            foreach (var child in node.Children)
-                RenderSearchResults(dl, child, depth + 1, availW, ref y, bottom);
         }
 
         public static void Render()
         {
             if (!Open) return;
+            // Hide the explorer whenever the main menu is closed.
+            if (!MenuUI.Open) return;
 
             var io = ImGui.GetIO();
 
@@ -285,11 +360,23 @@ namespace IMGUI
                 io.MousePos.X >= pos.X && io.MousePos.X <= pos.X + size.X &&
                 io.MousePos.Y >= pos.Y && io.MousePos.Y <= pos.Y + 26f;
 
-            if (!dragActive && io.MouseClicked[0] && overHeader)
+            // bottom-right resize grip
+            float grip = 16f;
+            bool overGrip = io.MousePos.X >= pos.X + size.X - grip && io.MousePos.X <= pos.X + size.X &&
+                io.MousePos.Y >= pos.Y + size.Y - grip && io.MousePos.Y <= pos.Y + size.Y;
+
+            if (!dragActive && !resizeActive && io.MouseClicked[0] && overHeader)
             {
                 dragActive = true;
                 dragStartMouse = io.MousePos;
                 dragStartPos = pos;
+            }
+            else if (!dragActive && !resizeActive && io.MouseClicked[0] && overGrip)
+            {
+                resizeActive = true;
+                resizeStartMouse = io.MousePos;
+                resizeStartPos = pos;
+                resizeStartSize = size;
             }
 
             if (dragActive)
@@ -298,6 +385,20 @@ namespace IMGUI
                     pos = Vector2.Max(dragStartPos + (io.MousePos - dragStartMouse), Vector2.Zero);
                 else
                     dragActive = false;
+            }
+
+            if (resizeActive)
+            {
+                if (io.MouseDown[0])
+                {
+                    Vector2 ns = resizeStartSize + (io.MousePos - resizeStartMouse);
+                    ns = Vector2.Max(ns, new Vector2(300f, 300f));
+                    size = ns;
+                }
+                else
+                {
+                    resizeActive = false;
+                }
             }
 
             ImGui.SetNextWindowPos(pos, ImGuiCond.Always);
@@ -376,8 +477,18 @@ namespace IMGUI
                 YerbaColors.TextActive, search);
 
             EnsureRoot();
-            if (root.Address != 0 && !root.Loaded)
+            // LoadChildren no-ops if already populated and re-tries if empty, so
+            // the tree always fills in as soon as the game is attached.
+            if (root.Address != 0)
                 LoadChildren(root);
+
+            // Rebuild cached search results only when the search text changes
+            // (this is what was running every frame before and tanked the FPS).
+            if (search != lastSearch)
+            {
+                lastSearch = search;
+                BuildSearchResults();
+            }
 
             float treeTop = searchMax.Y + pad;
             float treeBottom = bodyMax.Y - pad;
@@ -395,7 +506,7 @@ namespace IMGUI
                 }
                 else
                 {
-                    RenderSearchResults(dl, root, 0, availW, ref y, treeBottom);
+                    RenderCachedResults(dl, availW, ref y, treeBottom);
                 }
             }
             else
@@ -427,6 +538,12 @@ namespace IMGUI
 
             dl.AddRect(min, max, YerbaColors.WithAlpha(YerbaColors.IceBlue, YerbaLayout.OutlineOpacity),
                 YerbaLayout.CornerR, ImDrawFlags.None, YerbaLayout.IceBorder);
+
+            // resize grip indicator (bottom-right)
+            dl.AddTriangleFilled(new Vector2(max.X - 10f, max.Y - 3f), new Vector2(max.X - 10f, max.Y - 10f),
+                new Vector2(max.X - 3f, max.Y - 10f), YerbaColors.WithAlpha(YerbaColors.TextIdle, 0.7f));
+            dl.AddTriangleFilled(new Vector2(max.X - 16f, max.Y - 5f), new Vector2(max.X - 16f, max.Y - 12f),
+                new Vector2(max.X - 9f, max.Y - 12f), YerbaColors.WithAlpha(YerbaColors.TextIdle, 0.5f));
 
             ImGui.End();
         }
