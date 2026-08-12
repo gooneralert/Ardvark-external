@@ -69,7 +69,7 @@ namespace ManualOffsets
         // Found by locating the WorldRoot method-name table (Raycast at index 21)
         // and cross-confirming via the registration function sub_142590E20,
         // which writes the desc at qword_1481E7150 (RVA 0x81E7150).
-        public const long RaycastBoundDesc = 0x81E7150;
+        public const long RaycastBoundDesc = 0x82012a0;
         public const long RaycastBoundFn   = 0x80;
     }
 
