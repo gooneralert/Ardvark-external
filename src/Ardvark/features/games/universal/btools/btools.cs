@@ -448,11 +448,12 @@ namespace FoulzExternal.features.games.universal.btools
             long control = MakeControlBlock(mem);
             if (control == 0) return false;
 
-            // Install the fake tool as both currentCommand (0x868/0x870) and
-            // stickyCommand (0x878/0x880) — each a shared_ptr pair.
-            // Verified:
-            //   Workspace::Process reads [0x868] + incs [ctrl+8]
-            //   ChangeMouseCommand writes [0x878] + [0x880] for sticky
+            // Install the fake tool as both currentCommand (0x870/0x878) and
+            // stickyCommand (0x880/0x888) — each a shared_ptr pair.
+            // Verified (current build):
+            //   Workspace::Process (sub_14120FA60) reads [0x870] + incs [0x878]
+            //   ChangeMouseCommand (sub_141206490) installs current [0x870]
+            //     and sticky [0x880] shared_ptr slots.
             mem.Write(workspace + WorkspaceCurrentCommand, tool);
             mem.Write(workspace + WorkspaceCurrentRefCount, control);
             mem.Write(workspace + WorkspaceStickyCommand, tool);
